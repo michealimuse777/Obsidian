@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+:root {
+  /* Obsidian Theme Palette */
+  --background: #0f021a;
+  /* Dark Purple */
+  --foreground: #ffffff;
+  --accent-purple: #a855f7;
+  --accent-glow: rgba(168, 85, 247, 0.15);
+
+  --font-inter: var(--font-inter);
+  --font-space: var(--font-space-grotesk);
+  --font-mono: var(--font-ibm-mono);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-accent-purple: var(--accent-purple);
+  --color-accent-glow: var(--accent-glow);
+
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-space);
+  --font-mono: var(--font-mono);
+}
+
+/* Utilities for the specialized look */
+.obsidian-radial {
+  background: radial-gradient(circle at center, rgba(168, 85, 247, 0.08) 0%, rgba(0, 0, 0, 0) 70%);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  overflow-x: hidden;
+}

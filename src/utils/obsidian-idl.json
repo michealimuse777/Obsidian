@@ -1,0 +1,247 @@
+{
+    "address": "BRGaXJJS6oHN1pBPnMhZQHtSfBLmVyYk75xqetsRfib9",
+    "metadata": {
+        "name": "obsidian",
+        "version": "0.1.0",
+        "spec": "0.1.0"
+    },
+    "instructions": [
+        {
+            "name": "initializeLaunch",
+            "discriminator": [
+                90,
+                201,
+                220,
+                142,
+                112,
+                253,
+                100,
+                13
+            ],
+            "accounts": [
+                {
+                    "name": "launch",
+                    "writable": true,
+                    "signer": true
+                },
+                {
+                    "name": "mint",
+                    "writable": false,
+                    "signer": false
+                },
+                {
+                    "name": "launchPool",
+                    "writable": true,
+                    "signer": false
+                },
+                {
+                    "name": "authority",
+                    "writable": true,
+                    "signer": true
+                },
+                {
+                    "name": "systemProgram",
+                    "writable": false,
+                    "signer": false
+                },
+                {
+                    "name": "tokenProgram",
+                    "writable": false,
+                    "signer": false
+                },
+                {
+                    "name": "associatedTokenProgram",
+                    "writable": false,
+                    "signer": false
+                },
+                {
+                    "name": "rent",
+                    "writable": false,
+                    "signer": false
+                }
+            ],
+            "args": [
+                {
+                    "name": "totalTokens",
+                    "type": "u64"
+                },
+                {
+                    "name": "maxAllocation",
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "submitEncryptedBid",
+            "discriminator": [
+                79,
+                24,
+                114,
+                130,
+                197,
+                38,
+                79,
+                99
+            ],
+            "accounts": [
+                {
+                    "name": "bid",
+                    "writable": true,
+                    "signer": false
+                },
+                {
+                    "name": "launch",
+                    "writable": true,
+                    "signer": false
+                },
+                {
+                    "name": "from",
+                    "writable": true,
+                    "signer": false
+                },
+                {
+                    "name": "to",
+                    "writable": true,
+                    "signer": false
+                },
+                {
+                    "name": "mint",
+                    "writable": false,
+                    "signer": false
+                },
+                {
+                    "name": "bidder",
+                    "writable": true,
+                    "signer": true
+                },
+                {
+                    "name": "systemProgram",
+                    "writable": false,
+                    "signer": false
+                },
+                {
+                    "name": "tokenProgram",
+                    "writable": false,
+                    "signer": false
+                }
+            ],
+            "args": [
+                {
+                    "name": "encryptedBid",
+                    "type": "bytes"
+                },
+                {
+                    "name": "amount",
+                    "type": "u64"
+                }
+            ]
+        }
+    ],
+    "accounts": [
+        {
+            "name": "Launch",
+            "discriminator": [
+                144,
+                51,
+                51,
+                163,
+                206,
+                85,
+                213,
+                38
+            ]
+        },
+        {
+            "name": "Bid",
+            "discriminator": [
+                143,
+                246,
+                48,
+                245,
+                42,
+                145,
+                180,
+                88
+            ]
+        }
+    ],
+    "types": [
+        {
+            "name": "Launch",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "authority",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "mint",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "launchPool",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "totalTokens",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "maxAllocation",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "tokensDistributed",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "isFinalized",
+                        "type": "bool"
+                    },
+                    {
+                        "name": "bump",
+                        "type": "u8"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Bid",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "bidder",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "encryptedData",
+                        "type": "bytes"
+                    },
+                    {
+                        "name": "isProcessed",
+                        "type": "bool"
+                    }
+                ]
+            }
+        }
+    ],
+    "errors": [
+        {
+            "code": 6000,
+            "name": "LaunchFinalized",
+            "msg": "The launch has already been finalized."
+        },
+        {
+            "code": 6001,
+            "name": "Unauthorized",
+            "msg": "You are not authorized to perform this action."
+        },
+        {
+            "code": 6002,
+            "name": "InvalidAllocationInput",
+            "msg": "Recipient and Amount lists must be equal length."
+        }
+    ]
+}
