@@ -88,4 +88,4 @@ To run the project locally with a simulated Solana cluster:
 
 ## License
 
-MIT License
+This project is licensed under the MIT License.
