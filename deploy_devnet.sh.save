@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+
+echo "Starting Deployment Process..."
+
+echo "[1/3] Building Anchor Program..."
+anchor build
+
+echo "[2/3] Setting Solana Cluster..."
+solana config set --url devnet
+
+echo "[3/3] Deploying Program..."
+anchor deploy
+
+echo "Deployment Complete ✅"

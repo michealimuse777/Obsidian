@@ -7,6 +7,9 @@ skip-lint = false
 [programs.localnet]
 obsidian = "BRGaXJJS6oHN1pBPnMhZQHtSfBLmVyYk75xqetsRfib9"
 
+[programs.devnet]
+obsidian = "BRGaXJJS6oHN1pBPnMhZQHtSfBLmVyYk75xqetsRfib9"
+
 [registry]
 url = "https://api.apr.dev"
 
