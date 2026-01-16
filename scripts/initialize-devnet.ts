@@ -1,15 +1,17 @@
-import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
-import { Obsidian } from "../target/types/obsidian";
-import { PublicKey, SystemProgram } from "@solana/web3.js";
+import anchor from "@coral-xyz/anchor";
+const { BN } = anchor;
+import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, createMint, getAssociatedTokenAddress } from "@solana/spl-token";
+import * as fs from "fs";
+const idl = JSON.parse(fs.readFileSync("./src/utils/obsidian-idl.json", "utf8"));
 
 async function main() {
     // Configure the client to use the local cluster.
     const provider = anchor.AnchorProvider.env();
     anchor.setProvider(provider);
 
-    const program = anchor.workspace.Obsidian as Program<Obsidian>;
+    const programId = new PublicKey("BRGaXJJS6oHN1pBPnMhZQHtSfBLmVyYk75xqetsRfib9");
+    const program = new anchor.Program(idl as any, provider) as any;
 
     console.log("Initializing Launch on Devnet...");
 
@@ -52,7 +54,7 @@ async function main() {
     // Total Tokens: 1,000,000
     // Max Allocation: 1,000
     await program.methods
-        .initializeLaunch(new anchor.BN(1_000_000 * 1e6), new anchor.BN(1_000 * 1e6))
+        .initializeLaunch(new BN(1_000_000 * 1e6), new BN(1_000 * 1e6))
         .accounts({
             launch: launchPda,
             mint: mint,
@@ -61,6 +63,7 @@ async function main() {
             systemProgram: SystemProgram.programId,
             tokenProgram: TOKEN_PROGRAM_ID,
             associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+            rent: SYSVAR_RENT_PUBKEY,
         })
         .rpc();
 

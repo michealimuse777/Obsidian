@@ -22,7 +22,7 @@
                 {
                     "name": "launch",
                     "writable": true,
-                    "signer": true
+                    "signer": false
                 },
                 {
                     "name": "mint",

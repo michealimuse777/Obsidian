@@ -26,6 +26,14 @@ export default function BidForm() {
         totalTokens: BN;
     } | null>(null);
 
+    // Reset form state when wallet changes
+    useEffect(() => {
+        setStatus('idle');
+        setAmount('');
+        setTxHash('');
+        setErrorMessage('');
+    }, [publicKey]);
+
     // Fetch Launch State on Mount
     useEffect(() => {
         if (!program) return;
@@ -51,6 +59,7 @@ export default function BidForm() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!amount || !publicKey || !program || !launchState) return;
+        if (status === 'encrypting' || status === 'submitting') return; // Prevent double-submit
 
         try {
             setErrorMessage('');
@@ -76,12 +85,29 @@ export default function BidForm() {
                 program.programId
             );
 
+            console.log("Bid PDA:", bidPda.toBase58());
+            console.log("Bidder PublicKey:", publicKey.toBase58());
+
+            // Check if bid already exists on-chain
+            try {
+                const existingBid = await program.account.bid.fetchNullable(bidPda);
+                if (existingBid) {
+                    console.log("Bid already exists on-chain:", existingBid);
+                    setAmount('');
+                    setTxHash("✓ Your bid is already on-chain!");
+                    setStatus('success');
+                    return;
+                }
+            } catch (checkErr) {
+                console.log("Could not check existing bid, proceeding with submission...");
+            }
+
             // User's ATA for the Payment Mint
             const fromAta = await spl.getAssociatedTokenAddress(
                 launchState.mint,
                 publicKey,
                 false,
-                spl.TOKEN_2022_PROGRAM_ID // IMPORTANT: Using Token2022 as per Phase 2
+                spl.TOKEN_PROGRAM_ID // Match deployed Mint (Standard SPL)
             );
 
             // Launch Pool ATA (Destination) - Defined in Launch Account
@@ -98,11 +124,12 @@ export default function BidForm() {
                     mint: launchState.mint,
                     bidder: publicKey,
                     systemProgram: SystemProgram.programId,
-                    tokenProgram: spl.TOKEN_2022_PROGRAM_ID, // Use Token2022
+                    tokenProgram: spl.TOKEN_PROGRAM_ID, // Use Standard Token Program
                 })
                 .rpc();
 
             console.log("Transaction Signature:", tx);
+            setAmount('');
             setTxHash(tx);
             setStatus('success');
 
@@ -141,9 +168,9 @@ export default function BidForm() {
                         <input
                             type="number"
                             value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
+                            onChange={(e) => { setAmount(e.target.value); if (status === 'success') setStatus('idle'); }}
                             placeholder="0.00"
-                            disabled={status !== 'idle' && status !== 'error'}
+                            disabled={status === 'encrypting' || status === 'submitting'}
                             className="w-full bg-black/20 border-b border-white/10 py-3 px-0 text-3xl font-display text-white focus:outline-none focus:border-accent-purple/50 transition-all placeholder:text-white/5"
                         />
                         <span className="absolute right-0 top-1/2 -translate-y-1/2 text-sm font-mono text-white/20">USDC</span>
