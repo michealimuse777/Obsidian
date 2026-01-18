@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, ArrowRight, Loader2, CheckCircle, Wallet } from 'lucide-react';
 import { useProgram } from '@/hooks/useProgram';
@@ -8,6 +8,9 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey, SystemProgram } from '@solana/web3.js';
 import * as spl from '@solana/spl-token';
 import { BN } from '@coral-xyz/anchor';
+import { toast } from 'sonner';
+import { arcium } from '@/lib/arcium';
+import { ARCIUM_CLUSTER_PUBKEY } from '@/utils/constants';
 
 export default function BidForm() {
     const { program } = useProgram();
@@ -18,6 +21,12 @@ export default function BidForm() {
     const [errorMessage, setErrorMessage] = useState('');
     const [txHash, setTxHash] = useState('');
     const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+    // Dashboard State
+    const [dashboardData, setDashboardData] = useState<{
+        txHash?: string;
+        amount?: string;
+    } | null>(null);
 
     const [launchState, setLaunchState] = useState<{
         authority: PublicKey;
@@ -32,45 +41,70 @@ export default function BidForm() {
         setAmount('');
         setTxHash('');
         setErrorMessage('');
+        setDashboardData(null);
     }, [publicKey]);
 
-    // Fetch Launch State on Mount
+    // Initial Check for Existing Bid & Fetch Launch State
     useEffect(() => {
-        if (!program) return;
+        if (!program || !publicKey) return;
 
-        const fetchLaunch = async () => {
+        const init = async () => {
             try {
+                // 1. Fetch Launch State
                 const [launchPda] = PublicKey.findProgramAddressSync(
                     [Buffer.from("launch")],
                     program.programId
                 );
-                const account = await program.account.launch.fetchNullable(launchPda);
-                if (account) {
-                    setLaunchState(account as any);
+                const launchAccount = await program.account.launch.fetchNullable(launchPda);
+                if (launchAccount) {
+                    setLaunchState(launchAccount as any);
+                }
+
+                // 2. Check for Existing Bid
+                const [bidPda] = PublicKey.findProgramAddressSync(
+                    [Buffer.from("bid"), publicKey.toBuffer()],
+                    program.programId
+                );
+                const existingBid = await program.account.bid.fetchNullable(bidPda);
+                if (existingBid) {
+                    console.log("Found existing bid:", existingBid);
+                    setDashboardData({
+                        txHash: "Already Registered",
+                    });
                 }
             } catch (err) {
-                console.error("Failed to fetch launch state:", err);
+                console.error("Error initializing BidForm:", err);
             }
         };
 
-        fetchLaunch();
-    }, [program]);
+        init();
+    }, [program, publicKey]);
+
+    const isSubmittingRef = useRef(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!amount || !publicKey || !program || !launchState) return;
-        if (status === 'encrypting' || status === 'submitting') return; // Prevent double-submit
+        if (status === 'encrypting' || status === 'submitting') return;
+        if (isSubmittingRef.current) return;
+
+        isSubmittingRef.current = true;
 
         try {
             setErrorMessage('');
 
-            // 1. Encryption Simulation (Arcium Placeholder)
+            // 1. Encryption (Real Arcium)
             setStatus('encrypting');
-            await new Promise(r => setTimeout(r, 1000));
+            // Simulate network delay for effect
+            await new Promise(r => setTimeout(r, 600));
 
-            // Create a mock encrypted payload (In Phase 4 this comes from Arcium SDK)
-            const encryptedPayload = Buffer.from(new TextEncoder().encode(`ENCRYPTED:${amount}`));
-            const amountBN = new BN(parseFloat(amount) * 1_000_000); // Assuming 6 decimals for USDC/Mint
+            // Encrypt data for the Cypher Node (Cluster)
+            // Format: "ENCRYPTED:<AMOUNT>"
+            const payloadString = `ENCRYPTED:${amount}`;
+            const encryptedUint8 = arcium.encrypt(payloadString, ARCIUM_CLUSTER_PUBKEY);
+            const encryptedPayload = Buffer.from(encryptedUint8);
+
+            const amountBN = new BN(parseFloat(amount) * 1_000_000);
 
             setStatus('submitting');
 
@@ -85,32 +119,23 @@ export default function BidForm() {
                 program.programId
             );
 
-            console.log("Bid PDA:", bidPda.toBase58());
-            console.log("Bidder PublicKey:", publicKey.toBase58());
-
-            // Check if bid already exists on-chain
-            try {
-                const existingBid = await program.account.bid.fetchNullable(bidPda);
-                if (existingBid) {
-                    console.log("Bid already exists on-chain:", existingBid);
-                    setAmount('');
-                    setTxHash("✓ Your bid is already on-chain!");
-                    setStatus('success');
-                    return;
-                }
-            } catch (checkErr) {
-                console.log("Could not check existing bid, proceeding with submission...");
+            // Safety Check
+            const existingBid = await program.account.bid.fetchNullable(bidPda);
+            if (existingBid) {
+                toast.success('Bid verified on-chain');
+                setDashboardData({ txHash: "Verified On-Chain" });
+                isSubmittingRef.current = false;
+                return;
             }
 
-            // User's ATA for the Payment Mint
+            // User's ATA
             const fromAta = await spl.getAssociatedTokenAddress(
                 launchState.mint,
                 publicKey,
                 false,
-                spl.TOKEN_PROGRAM_ID // Match deployed Mint (Standard SPL)
+                spl.TOKEN_PROGRAM_ID
             );
 
-            // Launch Pool ATA (Destination) - Defined in Launch Account
             const toAta = launchState.launchPool;
 
             // 3. Send Transaction
@@ -124,13 +149,14 @@ export default function BidForm() {
                     mint: launchState.mint,
                     bidder: publicKey,
                     systemProgram: SystemProgram.programId,
-                    tokenProgram: spl.TOKEN_PROGRAM_ID, // Use Standard Token Program
+                    tokenProgram: spl.TOKEN_PROGRAM_ID,
                 })
                 .rpc();
 
             console.log("Transaction Signature:", tx);
-            setAmount('');
-            setTxHash(tx);
+            toast.success('Bid Encrypted & Submitted');
+
+            setDashboardData({ txHash: tx });
             setStatus('success');
 
             if (window.innerWidth < 768) {
@@ -139,22 +165,89 @@ export default function BidForm() {
 
         } catch (err: any) {
             console.error("Bid Submission Error:", err);
+
+            // Handle "already processed"
+            const errMsg = err.message || "";
+            if (errMsg.includes("already been processed") || errMsg.includes("already in use")) {
+                try {
+                    const [bidPda] = PublicKey.findProgramAddressSync([Buffer.from("bid"), publicKey!.toBuffer()], program!.programId);
+                    const existingBid = await program!.account.bid.fetchNullable(bidPda);
+                    if (existingBid) {
+                        toast.success('Bid verified on-chain');
+                        setDashboardData({ txHash: "Verified On-Chain" });
+                        return;
+                    }
+                } catch (checkErr) { console.log(checkErr); }
+            }
+
             setStatus('error');
             setErrorMessage(err.message || "Transaction failed");
+            toast.error('Submission Failed', { description: err.message });
+        } finally {
+            isSubmittingRef.current = false;
         }
     };
 
-    if (!launchState && program) {
+    // Loading State
+    if (!launchState && program && !dashboardData) {
         return (
             <div className="w-full max-w-sm mx-auto p-8 backdrop-blur-xl bg-black/40 rounded-xl border border-white/5 text-center">
                 <Loader2 className="w-6 h-6 animate-spin mx-auto text-white/30 mb-4" />
                 <p className="text-xs font-mono text-white/50">Loading Launch State...</p>
-                {/* Optional: Add 'Initialize' button here for dev testing if authority */}
             </div>
         );
     }
 
-    // Fix: Assign JSX to a variable instead of a nested component function to prevent focus loss on re-render.
+    // DASHBOARD VIEW (If Bid Exists)
+    if (dashboardData) {
+        return (
+            <div className="w-full max-w-sm mx-auto p-1">
+                <div className="backdrop-blur-xl bg-[#0f021a]/80 rounded-xl p-8 border border-white/10 shadow-2xl text-center space-y-6">
+                    <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4 ring-1 ring-green-500/30 shadow-[0_0_20px_rgba(34,197,94,0.2)]">
+                        <CheckCircle className="w-8 h-8 text-green-400" />
+                    </div>
+
+                    <div>
+                        <h3 className="text-xl font-display text-white mb-1">Bid Registered</h3>
+                        <p className="text-xs font-mono text-white/40 uppercase tracking-widest">Confidential Status: Active</p>
+                    </div>
+
+                    <div className="p-4 rounded-lg bg-black/40 border border-white/5 space-y-3 text-left">
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-white/30 font-mono">Amount</span>
+                            <span className="text-accent-purple font-mono flex items-center gap-2">
+                                <Lock className="w-3 h-3" /> Encrypted
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-white/30 font-mono">Tx Hash</span>
+                            <a
+                                href={dashboardData.txHash?.includes(" ") ? "#" : `https://explorer.solana.com/tx/${dashboardData.txHash}?cluster=devnet`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-white/60 hover:text-white underline decoration-white/20 underline-offset-4 truncate max-w-[120px]"
+                            >
+                                {dashboardData.txHash?.slice(0, 8)}...
+                            </a>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={() => {
+                            setDashboardData(null);
+                            setAmount('');
+                            // Allow reset only if really needed (debug), normally dashboard persists
+                        }}
+                        className="text-xs text-white/20 hover:text-white/50 transition-colors uppercase tracking-widest mt-4"
+                    >
+                        Close View
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // FORM VIEW
     const formElements = (
         <>
             <h3 className="text-sm font-mono tracking-widest text-white/40 mb-8 flex items-center justify-between uppercase">
@@ -171,9 +264,12 @@ export default function BidForm() {
                             onChange={(e) => { setAmount(e.target.value); if (status === 'success') setStatus('idle'); }}
                             placeholder="0.00"
                             disabled={status === 'encrypting' || status === 'submitting'}
-                            className="w-full bg-black/20 border-b border-white/10 py-3 px-0 text-3xl font-display text-white focus:outline-none focus:border-accent-purple/50 transition-all placeholder:text-white/5"
+                            className="w-full bg-transparent border-b border-white/5 py-4 px-2 text-4xl font-display text-white/90 focus:outline-none focus:border-accent-purple/30 transition-all placeholder:text-white/5 no-spinner tracking-tight"
                         />
-                        <span className="absolute right-0 top-1/2 -translate-y-1/2 text-sm font-mono text-white/20">USDC</span>
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-mono text-white/10 tracking-widest pointer-events-none group-focus-within:text-accent-purple/40 transition-colors">USDC</span>
+
+                        {/* Subtle Focus Glow */}
+                        <div className="absolute inset-0 -z-10 bg-accent-purple/5 opacity-0 group-focus-within:opacity-100 blur-xl transition-opacity duration-500 rounded-lg"></div>
                     </div>
                 </div>
 
@@ -241,32 +337,21 @@ export default function BidForm() {
                         {errorMessage}
                     </motion.div>
                 )}
-                {status === 'success' && (
-                    <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        className="mt-6 p-4 rounded-lg bg-white/5 text-sm text-white/50 font-mono border border-white/5"
-                    >
-                        <p className="text-[10px] uppercase tracking-wider text-white/30 mb-1">Confirmation Hash</p>
-                        <p className="truncate">{txHash}</p>
-                    </motion.div>
-                )}
             </AnimatePresence>
         </>
     );
 
     return (
         <>
-            {/* DESKTOP VIEW: Embedded Card */}
+            {/* DESKTOP VIEW */}
             <div className="hidden md:block w-full max-w-sm mx-auto p-1">
                 <div className="backdrop-blur-xl bg-[#0f021a]/60 rounded-xl p-8 relative overflow-hidden border border-white/5 shadow-2xl">
                     {formElements}
                 </div>
             </div>
 
-            {/* MOBILE VIEW: Collapsed Action & Slide-Up Panel */}
+            {/* MOBILE VIEW */}
             <div className="md:hidden">
-                {/* Trigger Button */}
                 {!isMobileOpen && (
                     <motion.button
                         initial={{ y: 20, opacity: 0 }}
@@ -279,11 +364,9 @@ export default function BidForm() {
                     </motion.button>
                 )}
 
-                {/* Slide-Up Drawer */}
                 <AnimatePresence>
                     {isMobileOpen && (
                         <>
-                            {/* Backdrop */}
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
@@ -292,7 +375,6 @@ export default function BidForm() {
                                 className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
                             />
 
-                            {/* Drawer */}
                             <motion.div
                                 initial={{ y: "100%" }}
                                 animate={{ y: 0 }}

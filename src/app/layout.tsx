@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter, Space_Grotesk, IBM_Plex_Mono } from 'next/font/google';
+import { Toaster } from 'sonner';
 import './globals.css';
 
 const inter = Inter({
@@ -38,6 +39,7 @@ export default function RootLayout({
         <AppWalletProvider>
           {children}
         </AppWalletProvider>
+        <Toaster richColors position="bottom-right" theme="dark" />
       </body>
     </html>
   );

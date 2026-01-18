@@ -135,6 +135,64 @@
                     "type": "u64"
                 }
             ]
+        },
+        {
+            "name": "finalizeAndDistribute",
+            "discriminator": [
+                9,
+                4,
+                113,
+                10,
+                171,
+                182,
+                199,
+                141
+            ],
+            "accounts": [
+                {
+                    "name": "launch",
+                    "writable": true,
+                    "signer": false
+                },
+                {
+                    "name": "launchPool",
+                    "writable": true,
+                    "signer": false
+                },
+                {
+                    "name": "mint",
+                    "writable": false,
+                    "signer": false
+                },
+                {
+                    "name": "authority",
+                    "writable": false,
+                    "signer": true
+                },
+                {
+                    "name": "tokenProgram",
+                    "writable": false,
+                    "signer": false
+                }
+            ],
+            "args": [
+                {
+                    "name": "allocationProof",
+                    "type": "bytes"
+                },
+                {
+                    "name": "recipients",
+                    "type": {
+                        "vec": "pubkey"
+                    }
+                },
+                {
+                    "name": "amounts",
+                    "type": {
+                        "vec": "u64"
+                    }
+                }
+            ]
         }
     ],
     "accounts": [
