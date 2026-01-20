@@ -22,17 +22,21 @@ export default function BidForm() {
     const [txHash, setTxHash] = useState('');
     const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-    // Dashboard State
-    const [dashboardData, setDashboardData] = useState<{
-        txHash?: string;
-        amount?: string;
-    } | null>(null);
 
     const [launchState, setLaunchState] = useState<{
         authority: PublicKey;
         mint: PublicKey;
         launchPool: PublicKey;
         totalTokens: BN;
+        isFinalized: boolean;
+    } | null>(null);
+
+    // Bid/Allocation State
+    const [bidData, setBidData] = useState<{
+        txHash?: string;
+        allocation?: number;
+        isClaimed?: boolean;
+        isProcessed?: boolean;
     } | null>(null);
 
     // Reset form state when wallet changes
@@ -41,7 +45,7 @@ export default function BidForm() {
         setAmount('');
         setTxHash('');
         setErrorMessage('');
-        setDashboardData(null);
+        setBidData(null);
     }, [publicKey]);
 
     // Initial Check for Existing Bid & Fetch Launch State
@@ -68,8 +72,12 @@ export default function BidForm() {
                 const existingBid = await program.account.bid.fetchNullable(bidPda);
                 if (existingBid) {
                     console.log("Found existing bid:", existingBid);
-                    setDashboardData({
-                        txHash: "Already Registered",
+                    const bidAccount = existingBid as any;
+                    setBidData({
+                        txHash: "Registered",
+                        allocation: bidAccount.allocation ? (bidAccount.allocation as BN).toNumber() / 1_000_000 : 0,
+                        isClaimed: bidAccount.isClaimed || false,
+                        isProcessed: bidAccount.isProcessed || false,
                     });
                 }
             } catch (err) {
@@ -123,7 +131,13 @@ export default function BidForm() {
             const existingBid = await program.account.bid.fetchNullable(bidPda);
             if (existingBid) {
                 toast.success('Bid verified on-chain');
-                setDashboardData({ txHash: "Verified On-Chain" });
+                const bidAccount = existingBid as any;
+                setBidData({
+                    txHash: "Verified",
+                    allocation: bidAccount.allocation ? (bidAccount.allocation as BN).toNumber() / 1_000_000 : 0,
+                    isClaimed: bidAccount.isClaimed || false,
+                    isProcessed: bidAccount.isProcessed || false,
+                });
                 isSubmittingRef.current = false;
                 return;
             }
@@ -156,7 +170,7 @@ export default function BidForm() {
             console.log("Transaction Signature:", tx);
             toast.success('Bid Encrypted & Submitted');
 
-            setDashboardData({ txHash: tx });
+            setBidData({ txHash: tx, allocation: 0, isClaimed: false, isProcessed: false });
             setStatus('success');
 
             if (window.innerWidth < 768) {
@@ -174,7 +188,13 @@ export default function BidForm() {
                     const existingBid = await program!.account.bid.fetchNullable(bidPda);
                     if (existingBid) {
                         toast.success('Bid verified on-chain');
-                        setDashboardData({ txHash: "Verified On-Chain" });
+                        const bidAccount = existingBid as any;
+                        setBidData({
+                            txHash: "Verified",
+                            allocation: bidAccount.allocation ? (bidAccount.allocation as BN).toNumber() / 1_000_000 : 0,
+                            isClaimed: bidAccount.isClaimed || false,
+                            isProcessed: bidAccount.isProcessed || false,
+                        });
                         return;
                     }
                 } catch (checkErr) { console.log(checkErr); }
@@ -189,7 +209,7 @@ export default function BidForm() {
     };
 
     // Loading State
-    if (!launchState && program && !dashboardData) {
+    if (!launchState && program && !bidData) {
         return (
             <div className="w-full max-w-sm mx-auto p-8 backdrop-blur-xl bg-black/40 rounded-xl border border-white/5 text-center">
                 <Loader2 className="w-6 h-6 animate-spin mx-auto text-white/30 mb-4" />
@@ -198,45 +218,145 @@ export default function BidForm() {
         );
     }
 
+    // Handle Claim
+    const handleClaim = async () => {
+        if (!program || !publicKey || !launchState) return;
+
+        try {
+            setStatus('submitting');
+
+            const [launchPda] = PublicKey.findProgramAddressSync(
+                [Buffer.from("launch")],
+                program.programId
+            );
+            const [bidPda] = PublicKey.findProgramAddressSync(
+                [Buffer.from("bid"), publicKey.toBuffer()],
+                program.programId
+            );
+
+            const userAta = await spl.getAssociatedTokenAddress(
+                launchState.mint,
+                publicKey,
+                false,
+                spl.TOKEN_PROGRAM_ID
+            );
+
+            const tx = await (program.methods as any)
+                .claimTokens()
+                .accounts({
+                    bid: bidPda,
+                    launch: launchPda,
+                    launchPool: launchState.launchPool,
+                    mint: launchState.mint,
+                    userAta: userAta,
+                    user: publicKey,
+                    tokenProgram: spl.TOKEN_PROGRAM_ID,
+                })
+                .rpc();
+
+            toast.success('Tokens Claimed!', { description: `Tx: ${tx.slice(0, 8)}...` });
+            setBidData(prev => prev ? { ...prev, isClaimed: true } : null);
+            setStatus('success');
+        } catch (err: any) {
+            console.error("Claim error:", err);
+            toast.error('Claim Failed', { description: err.message });
+            setStatus('error');
+        }
+    };
+
     // DASHBOARD VIEW (If Bid Exists)
-    if (dashboardData) {
+    if (bidData) {
+        const isAuctionFinalized = launchState?.isFinalized || false;
+        const hasAllocation = (bidData.allocation || 0) > 0;
+        const canClaim = isAuctionFinalized && hasAllocation && !bidData.isClaimed;
+
         return (
             <div className="w-full max-w-sm mx-auto p-1">
                 <div className="backdrop-blur-xl bg-[#0f021a]/80 rounded-xl p-8 border border-white/10 shadow-2xl text-center space-y-6">
-                    <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4 ring-1 ring-green-500/30 shadow-[0_0_20px_rgba(34,197,94,0.2)]">
-                        <CheckCircle className="w-8 h-8 text-green-400" />
+                    {/* Status Icon */}
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ring-1 shadow-lg ${bidData.isClaimed
+                        ? 'bg-green-500/10 ring-green-500/30 shadow-[0_0_20px_rgba(34,197,94,0.2)]'
+                        : hasAllocation
+                            ? 'bg-accent-purple/10 ring-accent-purple/30 shadow-[0_0_20px_rgba(168,85,247,0.2)]'
+                            : 'bg-white/5 ring-white/10'
+                        }`}>
+                        {bidData.isClaimed ? (
+                            <CheckCircle className="w-8 h-8 text-green-400" />
+                        ) : hasAllocation ? (
+                            <span className="text-2xl">🎉</span>
+                        ) : (
+                            <Lock className="w-6 h-6 text-white/40" />
+                        )}
                     </div>
 
+                    {/* Title */}
                     <div>
-                        <h3 className="text-xl font-display text-white mb-1">Bid Registered</h3>
-                        <p className="text-xs font-mono text-white/40 uppercase tracking-widest">Confidential Status: Active</p>
+                        <h3 className="text-xl font-display text-white mb-1">
+                            {bidData.isClaimed ? 'Tokens Claimed!' : hasAllocation ? 'You Won!' : 'Bid Registered'}
+                        </h3>
+                        <p className="text-xs font-mono text-white/40 uppercase tracking-widest">
+                            {isAuctionFinalized
+                                ? (bidData.isClaimed ? 'Claimed Successfully' : 'Auction Complete')
+                                : 'Auction In Progress'}
+                        </p>
                     </div>
 
+                    {/* Details Card */}
                     <div className="p-4 rounded-lg bg-black/40 border border-white/5 space-y-3 text-left">
                         <div className="flex justify-between items-center text-sm">
-                            <span className="text-white/30 font-mono">Amount</span>
+                            <span className="text-white/30 font-mono">Bid Amount</span>
                             <span className="text-accent-purple font-mono flex items-center gap-2">
                                 <Lock className="w-3 h-3" /> Encrypted
                             </span>
                         </div>
+
+                        {bidData.isProcessed && (
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-white/30 font-mono">Allocation</span>
+                                <span className={`font-mono font-bold ${hasAllocation ? 'text-green-400' : 'text-white/40'}`}>
+                                    {hasAllocation ? `${bidData.allocation?.toLocaleString()} OBS` : 'Pending...'}
+                                </span>
+                            </div>
+                        )}
+
                         <div className="flex justify-between items-center text-sm">
-                            <span className="text-white/30 font-mono">Tx Hash</span>
-                            <a
-                                href={dashboardData.txHash?.includes(" ") ? "#" : `https://explorer.solana.com/tx/${dashboardData.txHash}?cluster=devnet`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-white/60 hover:text-white underline decoration-white/20 underline-offset-4 truncate max-w-[120px]"
-                            >
-                                {dashboardData.txHash?.slice(0, 8)}...
-                            </a>
+                            <span className="text-white/30 font-mono">Status</span>
+                            <span className={`font-mono text-xs px-2 py-0.5 rounded ${bidData.isClaimed
+                                ? 'bg-green-500/20 text-green-400'
+                                : isAuctionFinalized
+                                    ? 'bg-accent-purple/20 text-accent-purple'
+                                    : 'bg-yellow-500/20 text-yellow-400'
+                                }`}>
+                                {bidData.isClaimed ? 'CLAIMED' : isAuctionFinalized ? 'READY' : 'PENDING'}
+                            </span>
                         </div>
                     </div>
 
+                    {/* Claim Button */}
+                    {canClaim && (
+                        <button
+                            onClick={handleClaim}
+                            disabled={status === 'submitting'}
+                            className="w-full py-3.5 rounded-lg font-mono text-sm tracking-wider uppercase bg-gradient-to-r from-accent-purple to-purple-600 text-white hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            {status === 'submitting' ? (
+                                <><Loader2 className="w-4 h-4 animate-spin" /> Claiming...</>
+                            ) : (
+                                <>🎁 Claim {bidData.allocation?.toLocaleString()} Tokens</>
+                            )}
+                        </button>
+                    )}
+
+                    {!isAuctionFinalized && (
+                        <p className="text-xs text-white/30 font-mono">
+                            ⏳ Allocation will be revealed when the auction ends
+                        </p>
+                    )}
+
                     <button
                         onClick={() => {
-                            setDashboardData(null);
+                            setBidData(null);
                             setAmount('');
-                            // Allow reset only if really needed (debug), normally dashboard persists
                         }}
                         className="text-xs text-white/20 hover:text-white/50 transition-colors uppercase tracking-widest mt-4"
                     >

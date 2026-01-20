@@ -19,6 +19,7 @@ pub mod obsidian {
         launch.max_allocation = max_allocation;
         launch.tokens_distributed = 0;
         launch.is_finalized = false;
+        launch.bump = ctx.bumps.launch; // FIX: Store bump for PDA signing
         Ok(())
     }
 
@@ -53,6 +54,8 @@ pub mod obsidian {
         bid.bidder = ctx.accounts.bidder.key();
         bid.encrypted_data = encrypted_bid;
         bid.is_processed = false;
+        bid.allocation = 0;
+        bid.is_claimed = false;
         
         Ok(())
     }
@@ -120,6 +123,79 @@ pub mod obsidian {
 
         Ok(())
     }
+
+    /// Record allocation for a bid (called by Cypher Node authority)
+    pub fn record_allocation(ctx: Context<RecordAllocation>, amount: u64) -> Result<()> {
+        let bid = &mut ctx.accounts.bid;
+        let launch = &ctx.accounts.launch;
+        
+        require!(!launch.is_finalized, ErrorCode::LaunchFinalized);
+        require!(ctx.accounts.authority.key() == launch.authority, ErrorCode::Unauthorized);
+        
+        bid.allocation = amount;
+        bid.is_processed = true;
+        
+        emit!(AllocationRecorded {
+            bidder: bid.bidder,
+            amount,
+        });
+        
+        Ok(())
+    }
+
+    /// Finalize the launch (marks auction as complete, enables claiming)
+    pub fn finalize_launch(ctx: Context<FinalizeLaunch>) -> Result<()> {
+        let launch = &mut ctx.accounts.launch;
+        require!(!launch.is_finalized, ErrorCode::LaunchFinalized);
+        require!(ctx.accounts.authority.key() == launch.authority, ErrorCode::Unauthorized);
+        
+        launch.is_finalized = true;
+        
+        emit!(LaunchFinalized {
+            proof_hash: [0u8; 32], // Placeholder
+        });
+        
+        Ok(())
+    }
+
+    /// Claim allocated tokens (called by users after finalization)
+    pub fn claim_tokens(ctx: Context<ClaimTokens>) -> Result<()> {
+        let bid = &mut ctx.accounts.bid;
+        let launch = &mut ctx.accounts.launch;
+        
+        require!(launch.is_finalized, ErrorCode::NotFinalized);
+        require!(bid.allocation > 0, ErrorCode::NoAllocation);
+        require!(!bid.is_claimed, ErrorCode::AlreadyClaimed);
+        
+        // Transfer tokens from launch_pool to user
+        let seeds = &[b"launch".as_ref(), &[launch.bump]];
+        let signer = &[&seeds[..]];
+        
+        anchor_spl::token_interface::transfer_checked(
+            CpiContext::new_with_signer(
+                ctx.accounts.token_program.to_account_info(),
+                anchor_spl::token_interface::TransferChecked {
+                    from: ctx.accounts.launch_pool.to_account_info(),
+                    mint: ctx.accounts.mint.to_account_info(),
+                    to: ctx.accounts.user_ata.to_account_info(),
+                    authority: launch.to_account_info(),
+                },
+                signer
+            ),
+            bid.allocation,
+            ctx.accounts.mint.decimals,
+        )?;
+        
+        bid.is_claimed = true;
+        launch.tokens_distributed += bid.allocation;
+        
+        emit!(TokensClaimed {
+            bidder: bid.bidder,
+            amount: bid.allocation,
+        });
+        
+        Ok(())
+    }
 }
 
 // ... InitializeLaunch ... 
@@ -160,7 +236,7 @@ pub struct SubmitBid<'info> {
     #[account(
         init,
         payer = bidder,
-        space = 8 + 32 + 4 + 200 + 1,
+        space = 8 + 32 + 4 + 200 + 1 + 8 + 1, // +8 for allocation, +1 for is_claimed
         seeds = [b"bid", bidder.key().as_ref()],
         bump
     )]
@@ -220,6 +296,72 @@ pub struct Finalize<'info> {
     pub token_program: Interface<'info, TokenInterface>,
 }
 
+#[derive(Accounts)]
+pub struct RecordAllocation<'info> {
+    #[account(
+        mut,
+        seeds = [b"bid", bid.bidder.as_ref()],
+        bump
+    )]
+    pub bid: Account<'info, Bid>,
+    
+    #[account(
+        seeds = [b"launch"],
+        bump = launch.bump
+    )]
+    pub launch: Account<'info, Launch>,
+    
+    pub authority: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct FinalizeLaunch<'info> {
+    #[account(
+        mut,
+        seeds = [b"launch"],
+        bump = launch.bump
+    )]
+    pub launch: Account<'info, Launch>,
+    
+    pub authority: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct ClaimTokens<'info> {
+    #[account(
+        mut,
+        seeds = [b"bid", user.key().as_ref()],
+        bump
+    )]
+    pub bid: Account<'info, Bid>,
+    
+    #[account(
+        mut,
+        seeds = [b"launch"],
+        bump = launch.bump
+    )]
+    pub launch: Account<'info, Launch>,
+    
+    #[account(
+        mut, 
+        address = launch.launch_pool
+    )]
+    pub launch_pool: InterfaceAccount<'info, TokenAccount>,
+    
+    #[account(mint::token_program = token_program)]
+    pub mint: InterfaceAccount<'info, Mint>,
+    
+    #[account(
+        mut,
+        constraint = user_ata.mint == mint.key(),
+        constraint = user_ata.owner == user.key()
+    )]
+    pub user_ata: InterfaceAccount<'info, TokenAccount>,
+    
+    pub user: Signer<'info>,
+    pub token_program: Interface<'info, TokenInterface>,
+}
+
 #[account]
 pub struct Launch {
     pub authority: Pubkey,
@@ -237,6 +379,8 @@ pub struct Bid {
     pub bidder: Pubkey,
     pub encrypted_data: Vec<u8>,
     pub is_processed: bool,
+    pub allocation: u64,    // Token amount won
+    pub is_claimed: bool,   // Whether tokens have been claimed
 }
 
 #[event]
@@ -249,6 +393,18 @@ pub struct LaunchFinalized {
     pub proof_hash: [u8; 32],
 }
 
+#[event]
+pub struct AllocationRecorded {
+    pub bidder: Pubkey,
+    pub amount: u64,
+}
+
+#[event]
+pub struct TokensClaimed {
+    pub bidder: Pubkey,
+    pub amount: u64,
+}
+
 #[error_code]
 pub enum ErrorCode {
     #[msg("The launch has already been finalized.")]
@@ -257,4 +413,10 @@ pub enum ErrorCode {
     Unauthorized,
     #[msg("Recipient and Amount lists must be equal length.")]
     InvalidAllocationInput,
+    #[msg("The launch has not been finalized yet.")]
+    NotFinalized,
+    #[msg("No allocation for this bid.")]
+    NoAllocation,
+    #[msg("Tokens have already been claimed.")]
+    AlreadyClaimed,
 }

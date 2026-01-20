@@ -169,75 +169,74 @@ async function main() {
         return;
     }
 
-    // F. Submit Settlement Transaction
-    console.log("⚡ Submitting Settlement Transaction to Solana...");
+    // NEW APPROACH: Use record_allocation per bid, then finalize_launch
+    // This is more scalable and allows users to claim on their own time
 
-    const recipients = allocations.map(a => a.bidder);
-    const amounts = allocations.map(a => a.allocation);
-    // Bids accounts (Launch PDA owns LaunchPool, we need it as signer? No, authority signs)
-    // Actually, finalize_and_distribute iterates remaining_accounts. 
-    // Wait, the current contract expects `remaining_accounts` (destinations).
-    // In `lib.rs`: "dest_account = &ctx.remaining_accounts[i]".
-    // This `dest_account` MUST be the User's Token Account (ATA), NOT the Bid Account.
-    // Why? Because `transfer_checked` -> `to: dest_account`.
-    // So we need to resolve the ATA for each bidder!
+    console.log("📝 Recording allocations on-chain...");
 
-    // We can use spl.getAssociatedTokenAddressSync
-    const recipientAtas = recipients.map(bidder =>
-        spl.getAssociatedTokenAddressSync(new PublicKey("Ankn2F9vZvhM8jJhcFaijU2jMHTeRnHS8uGGf2xG9LpE"), bidder)
-    );
+    let successCount = 0;
+    for (const alloc of allocations) {
+        try {
+            // Derive the Bid PDA for this bidder
+            const [bidPda] = PublicKey.findProgramAddressSync(
+                [Buffer.from("bid"), alloc.bidder.toBuffer()],
+                program.programId
+            );
 
-    try {
-        const tx = await program.methods
-            .finalizeAndDistribute(
-                Buffer.alloc(32), // Mock Proof
-                recipients, // Just for validation? In lib.rs: "require!(dest_account.key() == *recipient)"
-                // Wait, lib.rs checks `dest_account.key() == *recipient`.
-                // If dest_account is ATA, and recipient is WALLET, this check FAILS.
-                // Uh oh. The current contract implementation is BUGGY if it expects Wallet matching but transfers to ATA.
-                // Let's check `lib.rs` again.
-                // "require!(dest_account.key() == *recipient, ErrorCode::InvalidAllocationInput);"
-                // "to: dest_account.clone()"
-                // "transfer_checked ... to: dest_account"
-                // If `dest_account` is an ATA, it accepts tokens.
-                // If `dest_account` is a Wallet, `transfer_checked` fails (unless it's native SOL, but this is SPL).
+            console.log(`   Recording ${alloc.allocation} tokens for ${alloc.bidder.toBase58().slice(0, 8)}...`);
 
-                // CRITICAL BUG in `finalize_and_distribute` on chain:
-                // It expects `remaining_accounts` == `recipients`.
-                // If `recipients` are Wallet Pubkeys, then `remaining_accounts` must be Wallet Pubkeys.
-                // But you can't transfer SPL tokens to a Wallet Account directly (it needs an ATA).
-                // UNLESS the recipient IS the ATA.
+            const tx = await (program.methods as any)
+                .recordAllocation(new BN(alloc.allocation * 1_000_000)) // Convert to lamports if needed
+                .accounts({
+                    bid: bidPda,
+                    launch: launchPda,
+                    authority: provider.wallet.publicKey,
+                })
+                .rpc();
 
-                // So, `recipients` vector must contain ATAs.
-                amounts
-            )
-            .accounts({
-                launch: launchPda,
-                launchPool: launchState.launchPool,
-                mint: launchState.mint,
-                authority: provider.wallet.publicKey,
-                tokenProgram: spl.TOKEN_PROGRAM_ID,
-            })
-            // We need to pass the Deployer as signer, NOT the nodeKeypair (which is just for decryption).
-            // Luckily `provider.wallet` IS the deployer (loaded from env).
-            .remainingAccounts(recipientAtas.map(pubkey => ({
-                pubkey,
-                isWritable: true,
-                isSigner: false
-            })))
-            .rpc();
-
-        console.log(`🎉 Settlement Success! Tx: ${tx}`);
-        console.log("Check the explorer to see the transfer.");
-    } catch (e: any) {
-        if (e.error?.errorCode?.number === 2006 || e.message?.includes("ConstraintSeeds")) {
-            console.log("⚠️  On-Chain Finalization Skipped (Contract Limitation: Stored Bump is 0).");
-            console.log("✅ SIMULATION MODE: Marking Auction as Settled in Local Logs.");
-            console.log(`   - Distributed ${totalAllocated} tokens to ${recipientAtas.length} accounts.`);
-            console.log("   - Frontend will theoretically show 'Claim' button once contract is patched.");
-        } else {
-            console.error("❌ Settlement Failed:", e);
+            console.log(`   ✅ Recorded. Tx: ${tx.slice(0, 8)}...`);
+            successCount++;
+        } catch (e: any) {
+            if (e.error?.errorCode?.number === 2006 || e.message?.includes("ConstraintSeeds")) {
+                console.log(`   ⚠️  Skipped (bump bug) - will work after redeployment`);
+            } else if (e.message?.includes("already been processed")) {
+                console.log(`   ℹ️  Already recorded`);
+                successCount++;
+            } else {
+                console.error(`   ❌ Failed:`, e.message?.slice(0, 100));
+            }
         }
+    }
+
+    // F.2 Finalize the Launch
+    if (successCount > 0) {
+        console.log(`\n⚡ Finalizing auction (${successCount}/${allocations.length} allocations recorded)...`);
+
+        try {
+            const finalizeTx = await (program.methods as any)
+                .finalizeLaunch()
+                .accounts({
+                    launch: launchPda,
+                    authority: provider.wallet.publicKey,
+                })
+                .rpc();
+
+            console.log(`🎉 Auction Finalized! Tx: ${finalizeTx}`);
+            console.log("👉 Users can now claim their tokens in the frontend!");
+        } catch (e: any) {
+            if (e.error?.errorCode?.number === 2006 || e.message?.includes("ConstraintSeeds")) {
+                console.log("⚠️  Finalization Skipped (Contract bump bug - will work after redeployment)");
+                console.log("✅ SIMULATION COMPLETE: All allocations calculated and ready.");
+                console.log("   Once contract is redeployed, run this script again to settle on-chain.");
+            } else if (e.message?.includes("already been finalized")) {
+                console.log("ℹ️  Auction was already finalized.");
+            } else {
+                console.error("❌ Finalization Failed:", e.message);
+            }
+        }
+    } else {
+        console.log("\n⚠️  No allocations recorded. Settlement skipped.");
+        console.log("   This is likely due to the contract bump bug. Redeploy to fix.");
     }
 }
 
