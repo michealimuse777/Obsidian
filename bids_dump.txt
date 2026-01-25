@@ -1,0 +1,9 @@
+Bid #0: 4NxTN2tYkcnoyuF33MyJnLcikpJixWANxZgF7tL4gV1W | Processed: true | Alloc: 10000000000
+Bid #1: 9wJR2UzooSLgSyXxrYJBXRkBVfopDtDzeKeBKXUMhk8A | Processed: true | Alloc: 10000000000
+Bid #2: 4CgUPDvXfXm3HBNiL87wEXGnakx3ghszFs3WP3dai48Y | Processed: true | Alloc: 10000000000
+Bid #3: 4vBju8z3HB9tMaWqaafkkPYzL3pwiTgyPyhNKA8j451i | Processed: true | Alloc: 10000000000
+Bid #4: r1drkSgB834tv8FJuUCdjEEmPphULfniqyjynhEcYB9 | Processed: true | Alloc: 10000000000
+Bid #5: 2P1VfUeu94yF4jQGWQPqC9wE5J5qAteJCybXrQVf7Htu | Processed: true | Alloc: 10000000000
+Bid #6: HPqfURHkhYL1msHfnsqiWiyY5cLJDoRnAtBdBMF5jayv | Processed: true | Alloc: 50000000000
+Bid #7: C1Ymwk3ZgcvL71ztexmDUzgJGYKRwerQM4dpWyfYQKUq | Processed: true | Alloc: 10000000000
+Bid #8: CrqbaZiLQvmLZG5RJYRLher59qYeLKfNbteMyuywjVek | Processed: true | Alloc: 230000000

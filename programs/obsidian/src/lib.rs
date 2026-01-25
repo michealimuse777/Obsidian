@@ -93,7 +93,7 @@ pub mod obsidian {
                 // CPI to Transfer
                 // Signer Seeds for Launch PDA (which owns launch_pool)
                 let bump_seed = launch.bump;
-                let seeds = &[b"launch".as_ref(), &[bump_seed]];
+                let seeds = &[b"launch_v1".as_ref(), &[bump_seed]];
                 let signer = &[&seeds[..]];
 
                 anchor_spl::token_interface::transfer_checked(
@@ -168,7 +168,7 @@ pub mod obsidian {
         require!(!bid.is_claimed, ErrorCode::AlreadyClaimed);
         
         // Transfer tokens from launch_pool to user
-        let seeds = &[b"launch".as_ref(), &[launch.bump]];
+        let seeds = &[b"launch_v1".as_ref(), &[launch.bump]];
         let signer = &[&seeds[..]];
         
         anchor_spl::token_interface::transfer_checked(
@@ -206,7 +206,7 @@ pub struct InitializeLaunch<'info> {
         init,
         payer = authority,
         space = 8 + 32 + 32 + 32 + 8 + 8 + 8 + 1 + 1, // Added space for 'bump'
-        seeds = [b"launch"],
+        seeds = [b"launch_v1"],
         bump
     )]
     pub launch: Account<'info, Launch>,
@@ -278,7 +278,7 @@ pub struct RunAi<'info> {
 pub struct Finalize<'info> {
     #[account(
         mut,
-        seeds = [b"launch"],
+        seeds = [b"launch_v1"],
         bump = launch.bump
     )]
     pub launch: Account<'info, Launch>,
@@ -306,7 +306,7 @@ pub struct RecordAllocation<'info> {
     pub bid: Account<'info, Bid>,
     
     #[account(
-        seeds = [b"launch"],
+        seeds = [b"launch_v1"],
         bump = launch.bump
     )]
     pub launch: Account<'info, Launch>,
@@ -318,7 +318,7 @@ pub struct RecordAllocation<'info> {
 pub struct FinalizeLaunch<'info> {
     #[account(
         mut,
-        seeds = [b"launch"],
+        seeds = [b"launch_v1"],
         bump = launch.bump
     )]
     pub launch: Account<'info, Launch>,
@@ -337,7 +337,7 @@ pub struct ClaimTokens<'info> {
     
     #[account(
         mut,
-        seeds = [b"launch"],
+        seeds = [b"launch_v1"],
         bump = launch.bump
     )]
     pub launch: Account<'info, Launch>,

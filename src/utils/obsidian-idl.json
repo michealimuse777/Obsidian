@@ -1,305 +1,582 @@
 {
-    "address": "BRGaXJJS6oHN1pBPnMhZQHtSfBLmVyYk75xqetsRfib9",
-    "metadata": {
-        "name": "obsidian",
-        "version": "0.1.0",
-        "spec": "0.1.0"
+  "address": "BRGaXJJS6oHN1pBPnMhZQHtSfBLmVyYk75xqetsRfib9",
+  "metadata": {
+    "name": "obsidian",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "finalize_and_distribute",
+      "discriminator": [
+        9,
+        4,
+        113,
+        10,
+        171,
+        182,
+        199,
+        141
+      ],
+      "accounts": [
+        {
+          "name": "launch",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  97,
+                  117,
+                  110,
+                  99,
+                  104
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "launch_pool",
+          "writable": true
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "allocation_proof",
+          "type": "bytes"
+        },
+        {
+          "name": "recipients",
+          "type": {
+            "vec": "pubkey"
+          }
+        },
+        {
+          "name": "amounts",
+          "type": {
+            "vec": "u64"
+          }
+        }
+      ]
     },
-    "instructions": [
+    {
+      "name": "initialize_launch",
+      "discriminator": [
+        90,
+        201,
+        220,
+        142,
+        112,
+        253,
+        100,
+        13
+      ],
+      "accounts": [
         {
-            "name": "initializeLaunch",
-            "discriminator": [
-                90,
-                201,
-                220,
-                142,
-                112,
-                253,
-                100,
-                13
-            ],
-            "accounts": [
-                {
-                    "name": "launch",
-                    "writable": true,
-                    "signer": false
-                },
-                {
-                    "name": "mint",
-                    "writable": false,
-                    "signer": false
-                },
-                {
-                    "name": "launchPool",
-                    "writable": true,
-                    "signer": false
-                },
-                {
-                    "name": "authority",
-                    "writable": true,
-                    "signer": true
-                },
-                {
-                    "name": "systemProgram",
-                    "writable": false,
-                    "signer": false
-                },
-                {
-                    "name": "tokenProgram",
-                    "writable": false,
-                    "signer": false
-                },
-                {
-                    "name": "associatedTokenProgram",
-                    "writable": false,
-                    "signer": false
-                },
-                {
-                    "name": "rent",
-                    "writable": false,
-                    "signer": false
-                }
-            ],
-            "args": [
-                {
-                    "name": "totalTokens",
-                    "type": "u64"
-                },
-                {
-                    "name": "maxAllocation",
-                    "type": "u64"
-                }
+          "name": "launch",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  97,
+                  117,
+                  110,
+                  99,
+                  104
+                ]
+              }
             ]
+          }
         },
         {
-            "name": "submitEncryptedBid",
-            "discriminator": [
-                79,
-                24,
-                114,
-                130,
-                197,
-                38,
-                79,
-                99
-            ],
-            "accounts": [
-                {
-                    "name": "bid",
-                    "writable": true,
-                    "signer": false
-                },
-                {
-                    "name": "launch",
-                    "writable": true,
-                    "signer": false
-                },
-                {
-                    "name": "from",
-                    "writable": true,
-                    "signer": false
-                },
-                {
-                    "name": "to",
-                    "writable": true,
-                    "signer": false
-                },
-                {
-                    "name": "mint",
-                    "writable": false,
-                    "signer": false
-                },
-                {
-                    "name": "bidder",
-                    "writable": true,
-                    "signer": true
-                },
-                {
-                    "name": "systemProgram",
-                    "writable": false,
-                    "signer": false
-                },
-                {
-                    "name": "tokenProgram",
-                    "writable": false,
-                    "signer": false
-                }
-            ],
-            "args": [
-                {
-                    "name": "encryptedBid",
-                    "type": "bytes"
-                },
-                {
-                    "name": "amount",
-                    "type": "u64"
-                }
-            ]
+          "name": "mint"
         },
         {
-            "name": "finalizeAndDistribute",
-            "discriminator": [
-                9,
-                4,
-                113,
-                10,
-                171,
-                182,
-                199,
-                141
+          "name": "launch_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "launch"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
             ],
-            "accounts": [
-                {
-                    "name": "launch",
-                    "writable": true,
-                    "signer": false
-                },
-                {
-                    "name": "launchPool",
-                    "writable": true,
-                    "signer": false
-                },
-                {
-                    "name": "mint",
-                    "writable": false,
-                    "signer": false
-                },
-                {
-                    "name": "authority",
-                    "writable": false,
-                    "signer": true
-                },
-                {
-                    "name": "tokenProgram",
-                    "writable": false,
-                    "signer": false
-                }
-            ],
-            "args": [
-                {
-                    "name": "allocationProof",
-                    "type": "bytes"
-                },
-                {
-                    "name": "recipients",
-                    "type": {
-                        "vec": "pubkey"
-                    }
-                },
-                {
-                    "name": "amounts",
-                    "type": {
-                        "vec": "u64"
-                    }
-                }
-            ]
-        }
-    ],
-    "accounts": [
-        {
-            "name": "Launch",
-            "discriminator": [
-                144,
-                51,
-                51,
-                163,
-                206,
-                85,
-                213,
-                38
-            ]
-        },
-        {
-            "name": "Bid",
-            "discriminator": [
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
                 143,
-                246,
-                48,
-                245,
-                42,
-                145,
-                180,
-                88
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "total_tokens",
+          "type": "u64"
+        },
+        {
+          "name": "max_allocation",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "run_ai_allocation",
+      "discriminator": [
+        221,
+        205,
+        196,
+        165,
+        195,
+        161,
+        194,
+        34
+      ],
+      "accounts": [
+        {
+          "name": "launch",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "submit_encrypted_bid",
+      "discriminator": [
+        79,
+        24,
+        114,
+        130,
+        197,
+        38,
+        79,
+        99
+      ],
+      "accounts": [
+        {
+          "name": "bid",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  105,
+                  100
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "bidder"
+              }
             ]
-        }
-    ],
-    "types": [
+          }
+        },
         {
-            "name": "Launch",
+          "name": "launch",
+          "writable": true
+        },
+        {
+          "name": "from",
+          "writable": true
+        },
+        {
+          "name": "to",
+          "writable": true
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "bidder",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "encrypted_bid",
+          "type": "bytes"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "record_allocation",
+      "discriminator": [
+        77,
+        89,
+        9,
+        55,
+        102,
+        64,
+        146,
+        78
+      ],
+      "accounts": [
+        {
+          "name": "bid",
+          "writable": true,
+          "signer": false
+        },
+        {
+          "name": "launch",
+          "writable": false,
+          "signer": false
+        },
+        {
+          "name": "authority",
+          "writable": false,
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "finalize_launch",
+      "discriminator": [
+        113,
+        133,
+        62,
+        196,
+        58,
+        212,
+        118,
+        166
+      ],
+      "accounts": [
+        {
+          "name": "launch",
+          "writable": true,
+          "signer": false
+        },
+        {
+          "name": "authority",
+          "writable": false,
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "claim_tokens",
+      "discriminator": [
+        108,
+        216,
+        210,
+        231,
+        0,
+        212,
+        42,
+        64
+      ],
+      "accounts": [
+        {
+          "name": "bid",
+          "writable": true,
+          "signer": false
+        },
+        {
+          "name": "launch",
+          "writable": true,
+          "signer": false
+        },
+        {
+          "name": "launch_pool",
+          "writable": true,
+          "signer": false
+        },
+        {
+          "name": "mint",
+          "writable": false,
+          "signer": false
+        },
+        {
+          "name": "user_ata",
+          "writable": true,
+          "signer": false
+        },
+        {
+          "name": "user",
+          "writable": false,
+          "signer": true
+        },
+        {
+          "name": "token_program",
+          "writable": false,
+          "signer": false
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Bid",
+      "discriminator": [
+        143,
+        246,
+        48,
+        245,
+        42,
+        145,
+        180,
+        88
+      ]
+    },
+    {
+      "name": "Launch",
+      "discriminator": [
+        144,
+        51,
+        51,
+        163,
+        206,
+        85,
+        213,
+        38
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "AiProcessingStarted",
+      "discriminator": [
+        101,
+        163,
+        66,
+        85,
+        33,
+        192,
+        117,
+        134
+      ]
+    },
+    {
+      "name": "LaunchFinalized",
+      "discriminator": [
+        133,
+        100,
+        148,
+        180,
+        31,
+        64,
+        210,
+        203
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "LaunchFinalized",
+      "msg": "The launch has already been finalized."
+    },
+    {
+      "code": 6001,
+      "name": "Unauthorized",
+      "msg": "You are not authorized to perform this action."
+    },
+    {
+      "code": 6002,
+      "name": "InvalidAllocationInput",
+      "msg": "Recipient and Amount lists must be equal length."
+    }
+  ],
+  "types": [
+    {
+      "name": "AiProcessingStarted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Bid",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bidder",
+            "type": "pubkey"
+          },
+          {
+            "name": "encrypted_data",
+            "type": "bytes"
+          },
+          {
+            "name": "is_processed",
+            "type": "bool"
+          },
+          {
+            "name": "allocation",
+            "type": "u64"
+          },
+          {
+            "name": "is_claimed",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Launch",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "launch_pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "total_tokens",
+            "type": "u64"
+          },
+          {
+            "name": "max_allocation",
+            "type": "u64"
+          },
+          {
+            "name": "tokens_distributed",
+            "type": "u64"
+          },
+          {
+            "name": "is_finalized",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LaunchFinalized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "proof_hash",
             "type": {
-                "kind": "struct",
-                "fields": [
-                    {
-                        "name": "authority",
-                        "type": "pubkey"
-                    },
-                    {
-                        "name": "mint",
-                        "type": "pubkey"
-                    },
-                    {
-                        "name": "launchPool",
-                        "type": "pubkey"
-                    },
-                    {
-                        "name": "totalTokens",
-                        "type": "u64"
-                    },
-                    {
-                        "name": "maxAllocation",
-                        "type": "u64"
-                    },
-                    {
-                        "name": "tokensDistributed",
-                        "type": "u64"
-                    },
-                    {
-                        "name": "isFinalized",
-                        "type": "bool"
-                    },
-                    {
-                        "name": "bump",
-                        "type": "u8"
-                    }
-                ]
+              "array": [
+                "u8",
+                32
+              ]
             }
-        },
-        {
-            "name": "Bid",
-            "type": {
-                "kind": "struct",
-                "fields": [
-                    {
-                        "name": "bidder",
-                        "type": "pubkey"
-                    },
-                    {
-                        "name": "encryptedData",
-                        "type": "bytes"
-                    },
-                    {
-                        "name": "isProcessed",
-                        "type": "bool"
-                    }
-                ]
-            }
-        }
-    ],
-    "errors": [
-        {
-            "code": 6000,
-            "name": "LaunchFinalized",
-            "msg": "The launch has already been finalized."
-        },
-        {
-            "code": 6001,
-            "name": "Unauthorized",
-            "msg": "You are not authorized to perform this action."
-        },
-        {
-            "code": 6002,
-            "name": "InvalidAllocationInput",
-            "msg": "Recipient and Amount lists must be equal length."
-        }
-    ]
+          }
+        ]
+      }
+    }
+  ]
 }

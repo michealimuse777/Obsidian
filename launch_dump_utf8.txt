@@ -1,0 +1,4 @@
+Is Finalized: true
+Total Tokens: 1000000000000
+Tokens Distr: 0
+Bump:         254

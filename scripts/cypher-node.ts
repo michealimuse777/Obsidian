@@ -96,7 +96,7 @@ async function main() {
     console.log("📡 Connected to Devnet Program:", programId.toBase58());
 
     // C. Fetch Launch State
-    const [launchPda] = PublicKey.findProgramAddressSync([Buffer.from("launch")], programId);
+    const [launchPda] = PublicKey.findProgramAddressSync([Buffer.from("launch_v1")], programId);
     const launchState = await program.account.launch.fetchNullable(launchPda);
 
     if (!launchState) {

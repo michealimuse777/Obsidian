@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, ArrowRight, Loader2, CheckCircle, Wallet } from 'lucide-react';
 import { useProgram } from '@/hooks/useProgram';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { PublicKey, SystemProgram } from '@solana/web3.js';
+import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import * as spl from '@solana/spl-token';
 import { BN } from '@coral-xyz/anchor';
 import { toast } from 'sonner';
@@ -56,7 +56,7 @@ export default function BidForm() {
             try {
                 // 1. Fetch Launch State
                 const [launchPda] = PublicKey.findProgramAddressSync(
-                    [Buffer.from("launch")],
+                    [Buffer.from("launch_v1")],
                     program.programId
                 );
                 const launchAccount = await program.account.launch.fetchNullable(launchPda);
@@ -118,7 +118,7 @@ export default function BidForm() {
 
             // 2. Derive Accounts
             const [launchPda] = PublicKey.findProgramAddressSync(
-                [Buffer.from("launch")],
+                [Buffer.from("launch_v1")],
                 program.programId
             );
 
@@ -220,13 +220,25 @@ export default function BidForm() {
 
     // Handle Claim
     const handleClaim = async () => {
+        // DEMO MODE CHECK
+        const DEMO_MODE = false;
+
+        if (DEMO_MODE) {
+            setStatus('submitting');
+            await new Promise(r => setTimeout(r, 1500)); // Simulate tx
+            toast.success('Tokens Claimed! (Simulated)', { description: `Tx: 3xP4...Demo` });
+            setBidData(prev => prev ? { ...prev, isClaimed: true } : null);
+            setStatus('success');
+            return;
+        }
+
         if (!program || !publicKey || !launchState) return;
 
         try {
             setStatus('submitting');
 
             const [launchPda] = PublicKey.findProgramAddressSync(
-                [Buffer.from("launch")],
+                [Buffer.from("launch_v1")],
                 program.programId
             );
             const [bidPda] = PublicKey.findProgramAddressSync(
@@ -240,6 +252,25 @@ export default function BidForm() {
                 false,
                 spl.TOKEN_PROGRAM_ID
             );
+            try {
+                await spl.getAccount(program.provider.connection, userAta);
+            } catch (e) {
+                // If not found, create it
+                console.log("Creating User ATA...");
+                const createAtaTx = new Transaction().add(
+                    spl.createAssociatedTokenAccountInstruction(
+                        publicKey, // payer
+                        userAta,   // ata
+                        publicKey, // owner
+                        launchState.mint // mint
+                    )
+                );
+
+                // Send creation tx
+                const signature = await program.provider.sendAndConfirm(createAtaTx);
+                console.log("Created ATA:", signature);
+                toast.success("Created Token Account");
+            }
 
             const tx = await (program.methods as any)
                 .claimTokens()
@@ -266,9 +297,15 @@ export default function BidForm() {
 
     // DASHBOARD VIEW (If Bid Exists)
     if (bidData) {
-        const isAuctionFinalized = launchState?.isFinalized || false;
-        const hasAllocation = (bidData.allocation || 0) > 0;
+        // DEMO MODE: Force localized testing of Claim Flow since contract update is blocked
+        const DEMO_MODE = false;
+
+        const isAuctionFinalized = DEMO_MODE || launchState?.isFinalized || false;
+        const hasAllocation = DEMO_MODE || (bidData.allocation || 0) > 0;
         const canClaim = isAuctionFinalized && hasAllocation && !bidData.isClaimed;
+
+        // Mock allocation if zero in demo mode
+        const displayAllocation = bidData.allocation && bidData.allocation > 0 ? bidData.allocation : 50000;
 
         return (
             <div className="w-full max-w-sm mx-auto p-1">
@@ -310,11 +347,11 @@ export default function BidForm() {
                             </span>
                         </div>
 
-                        {bidData.isProcessed && (
+                        {(bidData.isProcessed || DEMO_MODE) && (
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-white/30 font-mono">Allocation</span>
                                 <span className={`font-mono font-bold ${hasAllocation ? 'text-green-400' : 'text-white/40'}`}>
-                                    {hasAllocation ? `${bidData.allocation?.toLocaleString()} OBS` : 'Pending...'}
+                                    {hasAllocation ? `${displayAllocation.toLocaleString()} OBS` : 'Pending...'}
                                 </span>
                             </div>
                         )}
@@ -342,7 +379,7 @@ export default function BidForm() {
                             {status === 'submitting' ? (
                                 <><Loader2 className="w-4 h-4 animate-spin" /> Claiming...</>
                             ) : (
-                                <>🎁 Claim {bidData.allocation?.toLocaleString()} Tokens</>
+                                <>🎁 Claim {displayAllocation.toLocaleString()} Tokens</>
                             )}
                         </button>
                     )}
