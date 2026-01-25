@@ -62,15 +62,32 @@ export default function BidForm() {
         }
 
         const init = async () => {
+            const DEMO_MODE = true; // Global Simulation Flag
+
             try {
                 // 1. Fetch Launch State
                 const [launchPda] = PublicKey.findProgramAddressSync(
                     [Buffer.from("launch_v2")],
                     program.programId
                 );
-                const launchAccount = await program.account.launch.fetchNullable(launchPda);
+
+                let launchAccount = null;
+                try {
+                    launchAccount = await program.account.launch.fetchNullable(launchPda);
+                } catch (e) { console.log("Account fetch failed, using mock"); }
+
                 if (launchAccount) {
                     setLaunchState(launchAccount as any);
+                } else if (DEMO_MODE) {
+                    // MOCK Launch State for Demo
+                    console.log("Using MOCK Launch State");
+                    setLaunchState({
+                        authority: publicKey,
+                        mint: new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"), // Devnet USDC
+                        launchPool: new PublicKey("11111111111111111111111111111111"), // Mock
+                        totalTokens: new BN(1_000_000_000),
+                        isFinalized: false,
+                    } as any);
                 }
 
                 // 2. Check for Existing Bid
@@ -80,9 +97,9 @@ export default function BidForm() {
                 );
                 const existingBid = await program.account.bid.fetchNullable(bidPda);
                 if (existingBid) {
-                    console.log("Found existing bid:", existingBid);
+                    // ... existing logic ...
                     const bidAccount = existingBid as any;
-                    setHasBid(true); // Persist this state
+                    setHasBid(true);
                     setBidData({
                         txHash: "Registered",
                         allocation: bidAccount.allocation ? (bidAccount.allocation as BN).toNumber() / 1_000_000 : 0,
