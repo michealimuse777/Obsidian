@@ -186,7 +186,7 @@ async function main() {
             console.log(`   Recording ${alloc.allocation} tokens for ${alloc.bidder.toBase58().slice(0, 8)}...`);
 
             const tx = await (program.methods as any)
-                .recordAllocation(new BN(alloc.allocation * 1_000_000)) // Convert to lamports if needed
+                .recordAllocation(alloc.allocation) // Already a BN with decimals
                 .accounts({
                     bid: bidPda,
                     launch: launchPda,
