@@ -185,7 +185,7 @@ export default function BidForm() {
 
             // Check if User has USDC Account
             const fromAccountInfo = await program.provider.connection.getAccountInfo(fromAta);
-            if (!fromAccountInfo) {
+            if (!fromAccountInfo && !DEMO_MODE) {
                 toast.error("No USDC Account Found", {
                     description: "You need USDC to place a bid. Please swap SOL for USDC in your wallet first."
                 });
