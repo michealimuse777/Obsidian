@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { ShieldCheck, EyeOff, Lock } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Hero() {
     return (
@@ -29,7 +30,7 @@ export default function Hero() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 1.2, ease: "easeOut" }}
-                className="relative z-10 flex flex-col items-start text-left gap-6 md:gap-8 max-w-2xl mr-auto pl-4 md:pl-12 mt-[-10vh] md:mt-0"
+                className="relative z-30 flex flex-col items-start text-left gap-6 md:gap-8 max-w-2xl mr-auto pl-4 md:pl-12 mt-[-10vh] md:mt-0"
             >
                 <div className="flex items-center gap-2 md:gap-3 px-2 md:px-4 py-1.5 rounded-sm border border-white/5 bg-black/40 text-[9px] md:text-[10px] font-mono uppercase tracking-[0.15em] md:tracking-[0.2em] text-accent-purple/60 shadow-sm backdrop-blur-md">
                     <span className="w-1 h-1 rounded-full bg-accent-purple animate-pulse" />
@@ -37,7 +38,7 @@ export default function Hero() {
                 </div>
 
                 {/* 4. Technical Typography (Mobile: Compressed & Quiet) */}
-                <h1 className="text-5xl md:text-8xl font-normal tracking-[-0.04em] leading-[0.9] font-display text-white/50 md:text-white/90">
+                <h1 className="text-5xl md:text-8xl font-normal tracking-[-0.04em] leading-[0.9] font-display text-white/50 md:text-white/90 text-glow">
                     Dark<br />
                     Launchpad.
                 </h1>
@@ -56,6 +57,9 @@ export default function Hero() {
                     <span className="flex items-center gap-2">
                         <Lock className="w-3 h-3" /> Encrypted
                     </span>
+                    <Link href="/governance" className="relative z-50 pointer-events-auto flex items-center gap-2 text-accent-purple/50 hover:text-accent-purple transition-colors border-b border-transparent hover:border-accent-purple/30">
+                        <ShieldCheck className="w-3 h-3" /> DAO Control
+                    </Link>
                 </div>
             </motion.div>
         </section>

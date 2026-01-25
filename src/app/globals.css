@@ -1,12 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  /* Obsidian Theme Palette */
-  --background: #0f021a;
-  /* Dark Purple */
-  --foreground: #ffffff;
-  --accent-purple: #a855f7;
-  --accent-glow: rgba(168, 85, 247, 0.15);
+  /* Obsidian Theme Palette - Accessible Dark Mode */
+  --background: #13041f;
+  /* Lighter than #0f021a for better contrast */
+
+  /* Text Strategy: High Contrast White & Tinted Muted */
+  /* Text Strategy: High Contrast White & Tinted Muted */
+  --foreground: #eeebf5;
+  /* Off-white with subtle lavender tint */
+  --foreground-muted: #d4bbf5;
+  /* Accessible Lilac (WCAG AA) */
+
+  --accent-purple: #c084fc;
+  /* Lighter Purple for better pop on dark bg */
+  --accent-glow: rgba(192, 132, 252, 0.15);
+
+  --card-bg: rgba(20, 5, 30, 0.6);
+  --card-border: rgba(255, 255, 255, 0.08);
 
   --font-inter: var(--font-inter);
   --font-space: var(--font-space-grotesk);
@@ -16,8 +27,12 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted: var(--foreground-muted);
   --color-accent-purple: var(--accent-purple);
   --color-accent-glow: var(--accent-glow);
+
+  --color-card-bg: var(--card-bg);
+  --color-card-border: var(--card-border);
 
   --font-sans: var(--font-inter);
   --font-display: var(--font-space);
@@ -26,13 +41,32 @@
 
 /* Utilities for the specialized look */
 .obsidian-radial {
-  background: radial-gradient(circle at center, rgba(168, 85, 247, 0.08) 0%, rgba(0, 0, 0, 0) 70%);
+  background: radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.15) 0%, rgba(19, 4, 31, 0) 70%);
+}
+
+.text-glow {
+  text-shadow: 0 0 12px rgba(192, 132, 252, 0.4),
+    0 0 24px rgba(192, 132, 252, 0.1);
+}
+
+.font-crypto {
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+  font-weight: 500;
+}
+
+.text-enclave-muted {
+  color: var(--foreground-muted);
+  letter-spacing: 0.02em;
 }
 
 .glass-panel {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
 }
 
 /* Remove number input spinners */
