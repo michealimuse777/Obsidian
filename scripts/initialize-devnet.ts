@@ -17,7 +17,7 @@ async function main() {
 
     // 1. Derive PDAs
     const [launchPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("launch")],
+        [Buffer.from("launch_v2")],
         program.programId
     );
 

@@ -93,7 +93,7 @@ pub mod obsidian {
                 // CPI to Transfer
                 // Signer Seeds for Launch PDA (which owns launch_pool)
                 let bump_seed = launch.bump;
-                let seeds = &[b"launch_v1".as_ref(), &[bump_seed]];
+                let seeds = &[b"launch_v2".as_ref(), &[bump_seed]];
                 let signer = &[&seeds[..]];
 
                 anchor_spl::token_interface::transfer_checked(
@@ -168,7 +168,7 @@ pub mod obsidian {
         require!(!bid.is_claimed, ErrorCode::AlreadyClaimed);
         
         // Transfer tokens from launch_pool to user
-        let seeds = &[b"launch_v1".as_ref(), &[launch.bump]];
+        let seeds = &[b"launch_v2".as_ref(), &[launch.bump]];
         let signer = &[&seeds[..]];
         
         anchor_spl::token_interface::transfer_checked(
@@ -206,7 +206,7 @@ pub struct InitializeLaunch<'info> {
         init,
         payer = authority,
         space = 8 + 32 + 32 + 32 + 8 + 8 + 8 + 1 + 1, // Added space for 'bump'
-        seeds = [b"launch_v1"],
+        seeds = [b"launch_v2"],
         bump
     )]
     pub launch: Account<'info, Launch>,
@@ -237,7 +237,7 @@ pub struct SubmitBid<'info> {
         init,
         payer = bidder,
         space = 8 + 32 + 4 + 200 + 1 + 8 + 1, // +8 for allocation, +1 for is_claimed
-        seeds = [b"bid", bidder.key().as_ref()],
+        seeds = [b"bid_v2", bidder.key().as_ref()],
         bump
     )]
     pub bid: Account<'info, Bid>,
@@ -278,7 +278,7 @@ pub struct RunAi<'info> {
 pub struct Finalize<'info> {
     #[account(
         mut,
-        seeds = [b"launch_v1"],
+        seeds = [b"launch_v2"],
         bump = launch.bump
     )]
     pub launch: Account<'info, Launch>,
@@ -300,13 +300,13 @@ pub struct Finalize<'info> {
 pub struct RecordAllocation<'info> {
     #[account(
         mut,
-        seeds = [b"bid", bid.bidder.as_ref()],
+        seeds = [b"bid_v2", bid.bidder.as_ref()],
         bump
     )]
     pub bid: Account<'info, Bid>,
     
     #[account(
-        seeds = [b"launch_v1"],
+        seeds = [b"launch_v2"],
         bump = launch.bump
     )]
     pub launch: Account<'info, Launch>,
@@ -318,7 +318,7 @@ pub struct RecordAllocation<'info> {
 pub struct FinalizeLaunch<'info> {
     #[account(
         mut,
-        seeds = [b"launch_v1"],
+        seeds = [b"launch_v2"],
         bump = launch.bump
     )]
     pub launch: Account<'info, Launch>,
@@ -330,14 +330,14 @@ pub struct FinalizeLaunch<'info> {
 pub struct ClaimTokens<'info> {
     #[account(
         mut,
-        seeds = [b"bid", user.key().as_ref()],
+        seeds = [b"bid_v2", user.key().as_ref()],
         bump
     )]
     pub bid: Account<'info, Bid>,
     
     #[account(
         mut,
-        seeds = [b"launch_v1"],
+        seeds = [b"launch_v2"],
         bump = launch.bump
     )]
     pub launch: Account<'info, Launch>,

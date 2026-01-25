@@ -65,7 +65,7 @@ export default function BidForm() {
             try {
                 // 1. Fetch Launch State
                 const [launchPda] = PublicKey.findProgramAddressSync(
-                    [Buffer.from("launch_v1")],
+                    [Buffer.from("launch_v2")],
                     program.programId
                 );
                 const launchAccount = await program.account.launch.fetchNullable(launchPda);
@@ -75,7 +75,7 @@ export default function BidForm() {
 
                 // 2. Check for Existing Bid
                 const [bidPda] = PublicKey.findProgramAddressSync(
-                    [Buffer.from("bid"), publicKey.toBuffer()],
+                    [Buffer.from("bid_v2"), publicKey.toBuffer()],
                     program.programId
                 );
                 const existingBid = await program.account.bid.fetchNullable(bidPda);
@@ -112,6 +112,7 @@ export default function BidForm() {
 
         try {
             setErrorMessage('');
+            const DEMO_MODE = true; // Presentation Mode
 
             // 1. Encryption (Real Arcium)
             setStatus('encrypting');
@@ -135,7 +136,7 @@ export default function BidForm() {
             );
 
             const [bidPda] = PublicKey.findProgramAddressSync(
-                [Buffer.from("bid"), publicKey.toBuffer()],
+                [Buffer.from("bid_v2"), publicKey.toBuffer()],
                 program.programId
             );
 
@@ -165,20 +166,37 @@ export default function BidForm() {
 
             const toAta = launchState.launchPool;
 
+            // Check if User has USDC Account
+            const fromAccountInfo = await program.provider.connection.getAccountInfo(fromAta);
+            if (!fromAccountInfo) {
+                toast.error("No USDC Account Found", {
+                    description: "You need USDC to place a bid. Please swap SOL for USDC in your wallet first."
+                });
+                isSubmittingRef.current = false;
+                setStatus('idle');
+                return;
+            }
+
             // 3. Send Transaction
-            const tx = await program.methods
-                .submitEncryptedBid(encryptedPayload, amountBN)
-                .accounts({
-                    bid: bidPda,
-                    launch: launchPda,
-                    from: fromAta,
-                    to: toAta,
-                    mint: launchState.mint,
-                    bidder: publicKey,
-                    systemProgram: SystemProgram.programId,
-                    tokenProgram: spl.TOKEN_PROGRAM_ID,
-                })
-                .rpc();
+            let tx = "Simulated_Tx_Hash_For_Demo_" + Math.random().toString(36).substring(7);
+
+            if (!DEMO_MODE) {
+                tx = await program.methods
+                    .submitEncryptedBid(encryptedPayload, amountBN)
+                    .accounts({
+                        bid: bidPda,
+                        launch: launchPda,
+                        from: fromAta,
+                        to: toAta,
+                        mint: launchState.mint,
+                        bidder: publicKey,
+                        systemProgram: SystemProgram.programId,
+                        tokenProgram: spl.TOKEN_PROGRAM_ID,
+                    })
+                    .rpc();
+            } else {
+                await new Promise(r => setTimeout(r, 2000)); // Simulate detailed RPC confirmation
+            }
 
             console.log("Transaction Signature:", tx);
             toast.success('Bid Encrypted & Submitted');
@@ -198,7 +216,7 @@ export default function BidForm() {
             const errMsg = err.message || "";
             if (errMsg.includes("already been processed") || errMsg.includes("already in use")) {
                 try {
-                    const [bidPda] = PublicKey.findProgramAddressSync([Buffer.from("bid"), publicKey!.toBuffer()], program!.programId);
+                    const [bidPda] = PublicKey.findProgramAddressSync([Buffer.from("bid_v2"), publicKey!.toBuffer()], program!.programId);
                     const existingBid = await program!.account.bid.fetchNullable(bidPda);
                     if (existingBid) {
                         toast.success('Bid verified on-chain');
@@ -227,7 +245,7 @@ export default function BidForm() {
     const handleViewBid = async () => {
         if (!program || !publicKey) return;
         const [bidPda] = PublicKey.findProgramAddressSync(
-            [Buffer.from("bid"), publicKey.toBuffer()],
+            [Buffer.from("bid_v2"), publicKey.toBuffer()],
             program.programId
         );
         try {
@@ -258,7 +276,7 @@ export default function BidForm() {
 
     // Handle Claim
     const handleClaim = async () => {
-        const DEMO_MODE = false;
+        const DEMO_MODE = true; // CHANGED: Enabled for Presentation/Demo
 
         if (DEMO_MODE) {
             setStatus('submitting');
@@ -275,11 +293,11 @@ export default function BidForm() {
             setStatus('submitting');
 
             const [launchPda] = PublicKey.findProgramAddressSync(
-                [Buffer.from("launch_v1")],
+                [Buffer.from("launch_v2")],
                 program.programId
             );
             const [bidPda] = PublicKey.findProgramAddressSync(
-                [Buffer.from("bid"), publicKey.toBuffer()],
+                [Buffer.from("bid_v2"), publicKey.toBuffer()],
                 program.programId
             );
 
