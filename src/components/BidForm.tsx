@@ -4,10 +4,10 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, ArrowRight, Loader2, CheckCircle, Wallet } from 'lucide-react';
 import { useProgram } from '@/hooks/useProgram';
-import { BN } from '@coral-xyz/anchor';
-import { PublicKey, SystemProgram, Keypair, Transaction, SendTransactionError } from '@solana/web3.js';
-import * as spl from '@solana/spl-token';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
+import * as spl from '@solana/spl-token';
+import { BN } from '@coral-xyz/anchor';
 import { toast } from 'sonner';
 import { arcium } from '@/lib/arcium';
 import { ARCIUM_CLUSTER_PUBKEY } from '@/utils/constants';
@@ -54,78 +54,6 @@ export default function BidForm() {
         setIsCheckingBid(true);
     }, [publicKey]);
 
-    const handleInitialize = async () => {
-        if (!program || !publicKey) return;
-        setStatus('submitting');
-        try {
-            console.log("Initializing Launch...");
-            // 1. Create a fresh Mint for this Launch
-            const mintKeypair = Keypair.generate();
-            const lamports = await program.provider.connection.getMinimumBalanceForRentExemption(spl.MINT_SIZE);
-
-            const createMintTx = new Transaction().add(
-                SystemProgram.createAccount({
-                    fromPubkey: publicKey,
-                    newAccountPubkey: mintKeypair.publicKey,
-                    space: spl.MINT_SIZE,
-                    lamports,
-                    programId: spl.TOKEN_PROGRAM_ID,
-                }),
-                spl.createInitializeMintInstruction(
-                    mintKeypair.publicKey,
-                    6,
-                    publicKey,
-                    publicKey,
-                    spl.TOKEN_PROGRAM_ID
-                )
-            );
-
-            // Send Mint Creation Tx
-            const sig = await program.provider.sendAndConfirm(createMintTx, [mintKeypair]);
-            console.log("Mint Created:", mintKeypair.publicKey.toBase58());
-
-            // 2. Derive PDAs
-            const [launchPda] = PublicKey.findProgramAddressSync(
-                [Buffer.from("launch_v2")],
-                program.programId
-            );
-            const launchPool = await spl.getAssociatedTokenAddress(
-                mintKeypair.publicKey,
-                launchPda,
-                true
-            );
-
-            // 3. Call Initialize
-            const totalTokens = new BN(1_000_000_000_000); // 1M tokens
-            const maxAllocation = new BN(5_000_000_000);   // 5k tokens
-
-            const tx = await program.methods
-                .initializeLaunch(totalTokens, maxAllocation)
-                .accounts({
-                    launch: launchPda,
-                    mint: mintKeypair.publicKey,
-                    launchPool: launchPool,
-                    authority: publicKey,
-                    systemProgram: SystemProgram.programId,
-                    tokenProgram: spl.TOKEN_PROGRAM_ID,
-                    associatedTokenProgram: spl.ASSOCIATED_TOKEN_PROGRAM_ID,
-                    rent: new PublicKey("SysvarRent111111111111111111111111111111111"),
-                })
-                .rpc();
-
-            console.log("Initialization Signature:", tx);
-            toast.success('Launch Initialized!');
-
-            // Refresh State
-            setTimeout(() => window.location.reload(), 2000);
-
-        } catch (err) {
-            console.error("Init Error:", err);
-            toast.error("Initialization Failed: " + (err as Error).message);
-            setStatus('idle');
-        }
-    };
-
     // Initial Check for Existing Bid & Fetch Launch State
     useEffect(() => {
         if (!program || !publicKey) {
@@ -134,7 +62,7 @@ export default function BidForm() {
         }
 
         const init = async () => {
-            const DEMO_MODE = false; // REAL MODE - Deployed!
+            const DEMO_MODE = true; // Global Simulation Flag
 
             try {
                 // 1. Fetch Launch State
@@ -146,13 +74,20 @@ export default function BidForm() {
                 let launchAccount = null;
                 try {
                     launchAccount = await program.account.launch.fetchNullable(launchPda);
-                } catch (e) { console.log("Account fetch failed, might need init"); }
+                } catch (e) { console.log("Account fetch failed, using mock"); }
 
                 if (launchAccount) {
                     setLaunchState(launchAccount as any);
-                } else {
-                    // Not initialized yet - Ready for User Init
-                    console.log("Launch not initialized.");
+                } else if (DEMO_MODE) {
+                    // MOCK Launch State for Demo
+                    console.log("Using MOCK Launch State");
+                    setLaunchState({
+                        authority: publicKey,
+                        mint: new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"), // Devnet USDC
+                        launchPool: new PublicKey("11111111111111111111111111111111"), // Mock
+                        totalTokens: new BN(1_000_000_000),
+                        isFinalized: false,
+                    } as any);
                 }
 
                 // 2. Check for Existing Bid
@@ -194,7 +129,7 @@ export default function BidForm() {
 
         try {
             setErrorMessage('');
-            const DEMO_MODE = false;
+            const DEMO_MODE = true; // Presentation Mode
 
             // 1. Encryption (Real Arcium)
             setStatus('encrypting');
@@ -345,48 +280,20 @@ export default function BidForm() {
     };
 
     // Loading State
-    if (isCheckingBid) {
+    if ((!launchState && program && !bidData) || (publicKey && isCheckingBid)) {
         return (
-            <div className="flex flex-col items-center justify-center p-12 space-y-4">
-                <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                <p className="text-slate-400">Loading Protocol State...</p>
-            </div>
-        );
-    }
-
-    if (!launchState) {
-        return (
-            <div className="text-center py-12 space-y-6">
-                <div className="p-4 bg-indigo-500/10 rounded-full w-16 h-16 mx-auto flex items-center justify-center">
-                    <svg className="w-8 h-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                </div>
-                <div>
-                    <h3 className="text-xl font-bold text-slate-200">Protocol Not Initialized</h3>
-                    <p className="text-slate-400 mt-2">Deploy complete. Ready to bootstrap.</p>
-                </div>
-                <button
-                    onClick={handleInitialize}
-                    disabled={status !== 'idle'}
-                    className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
-                >
-                    {status === 'submitting' ? (
-                        <>
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            Initializing...
-                        </>
-                    ) : (
-                        'Initialize Protocol'
-                    )}
-                </button>
+            <div className="w-full max-w-sm mx-auto p-8 backdrop-blur-xl bg-black/40 rounded-xl border border-white/5 text-center">
+                <Loader2 className="w-6 h-6 animate-spin mx-auto text-white/30 mb-4" />
+                <p className="text-xs font-mono text-white/50">
+                    {isCheckingBid ? "Verifying eligibility..." : "Loading Launch State..."}
+                </p>
             </div>
         );
     }
 
     // Handle Claim
     const handleClaim = async () => {
-        const DEMO_MODE = false;
+        const DEMO_MODE = true; // CHANGED: Enabled for Presentation/Demo
 
         if (DEMO_MODE) {
             setStatus('submitting');

@@ -4,7 +4,7 @@ use anchor_spl::{
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
 
-declare_id!("BBfQH32errj2SDKtZwFMDUZiT9nTdDCCzzAnFyaGFp6m");
+declare_id!("BRGaXJJS6oHN1pBPnMhZQHtSfBLmVyYk75xqetsRfib9");
 
 #[program]
 pub mod obsidian {

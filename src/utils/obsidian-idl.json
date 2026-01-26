@@ -1,5 +1,5 @@
 {
-  "address": "BBfQH32errj2SDKtZwFMDUZiT9nTdDCCzzAnFyaGFp6m",
+  "address": "BRGaXJJS6oHN1pBPnMhZQHtSfBLmVyYk75xqetsRfib9",
   "metadata": {
     "name": "obsidian",
     "version": "0.1.0",
@@ -7,88 +7,6 @@
     "description": "Created with Anchor"
   },
   "instructions": [
-    {
-      "name": "claim_tokens",
-      "docs": [
-        "Claim allocated tokens (called by users after finalization)"
-      ],
-      "discriminator": [
-        108,
-        216,
-        210,
-        231,
-        0,
-        212,
-        42,
-        64
-      ],
-      "accounts": [
-        {
-          "name": "bid",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  98,
-                  105,
-                  100,
-                  95,
-                  118,
-                  50
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "user"
-              }
-            ]
-          }
-        },
-        {
-          "name": "launch",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  97,
-                  117,
-                  110,
-                  99,
-                  104,
-                  95,
-                  118,
-                  50
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "launch_pool",
-          "writable": true
-        },
-        {
-          "name": "mint"
-        },
-        {
-          "name": "user_ata",
-          "writable": true
-        },
-        {
-          "name": "user",
-          "signer": true
-        },
-        {
-          "name": "token_program"
-        }
-      ],
-      "args": []
-    },
     {
       "name": "finalize_and_distribute",
       "discriminator": [
@@ -115,10 +33,7 @@
                   117,
                   110,
                   99,
-                  104,
-                  95,
-                  118,
-                  50
+                  104
                 ]
               }
             ]
@@ -159,51 +74,6 @@
       ]
     },
     {
-      "name": "finalize_launch",
-      "docs": [
-        "Finalize the launch (marks auction as complete, enables claiming)"
-      ],
-      "discriminator": [
-        113,
-        133,
-        62,
-        196,
-        58,
-        212,
-        118,
-        166
-      ],
-      "accounts": [
-        {
-          "name": "launch",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  97,
-                  117,
-                  110,
-                  99,
-                  104,
-                  95,
-                  118,
-                  50
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "authority",
-          "signer": true
-        }
-      ],
-      "args": []
-    },
-    {
       "name": "initialize_launch",
       "discriminator": [
         90,
@@ -229,10 +99,7 @@
                   117,
                   110,
                   99,
-                  104,
-                  95,
-                  118,
-                  50
+                  104
                 ]
               }
             ]
@@ -331,79 +198,6 @@
       ]
     },
     {
-      "name": "record_allocation",
-      "docs": [
-        "Record allocation for a bid (called by Cypher Node authority)"
-      ],
-      "discriminator": [
-        77,
-        89,
-        9,
-        55,
-        102,
-        64,
-        146,
-        78
-      ],
-      "accounts": [
-        {
-          "name": "bid",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  98,
-                  105,
-                  100,
-                  95,
-                  118,
-                  50
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "bid.bidder",
-                "account": "Bid"
-              }
-            ]
-          }
-        },
-        {
-          "name": "launch",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  97,
-                  117,
-                  110,
-                  99,
-                  104,
-                  95,
-                  118,
-                  50
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "authority",
-          "signer": true
-        }
-      ],
-      "args": [
-        {
-          "name": "amount",
-          "type": "u64"
-        }
-      ]
-    },
-    {
       "name": "run_ai_allocation",
       "discriminator": [
         221,
@@ -450,10 +244,7 @@
                 "value": [
                   98,
                   105,
-                  100,
-                  95,
-                  118,
-                  50
+                  100
                 ]
               },
               {
@@ -501,6 +292,119 @@
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "record_allocation",
+      "discriminator": [
+        77,
+        89,
+        9,
+        55,
+        102,
+        64,
+        146,
+        78
+      ],
+      "accounts": [
+        {
+          "name": "bid",
+          "writable": true,
+          "signer": false
+        },
+        {
+          "name": "launch",
+          "writable": false,
+          "signer": false
+        },
+        {
+          "name": "authority",
+          "writable": false,
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "finalize_launch",
+      "discriminator": [
+        113,
+        133,
+        62,
+        196,
+        58,
+        212,
+        118,
+        166
+      ],
+      "accounts": [
+        {
+          "name": "launch",
+          "writable": true,
+          "signer": false
+        },
+        {
+          "name": "authority",
+          "writable": false,
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "claim_tokens",
+      "discriminator": [
+        108,
+        216,
+        210,
+        231,
+        0,
+        212,
+        42,
+        64
+      ],
+      "accounts": [
+        {
+          "name": "bid",
+          "writable": true,
+          "signer": false
+        },
+        {
+          "name": "launch",
+          "writable": true,
+          "signer": false
+        },
+        {
+          "name": "launch_pool",
+          "writable": true,
+          "signer": false
+        },
+        {
+          "name": "mint",
+          "writable": false,
+          "signer": false
+        },
+        {
+          "name": "user_ata",
+          "writable": true,
+          "signer": false
+        },
+        {
+          "name": "user",
+          "writable": false,
+          "signer": true
+        },
+        {
+          "name": "token_program",
+          "writable": false,
+          "signer": false
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -546,19 +450,6 @@
       ]
     },
     {
-      "name": "AllocationRecorded",
-      "discriminator": [
-        169,
-        7,
-        251,
-        88,
-        19,
-        61,
-        65,
-        88
-      ]
-    },
-    {
       "name": "LaunchFinalized",
       "discriminator": [
         133,
@@ -569,19 +460,6 @@
         64,
         210,
         203
-      ]
-    },
-    {
-      "name": "TokensClaimed",
-      "discriminator": [
-        25,
-        128,
-        244,
-        55,
-        241,
-        136,
-        200,
-        91
       ]
     }
   ],
@@ -600,21 +478,6 @@
       "code": 6002,
       "name": "InvalidAllocationInput",
       "msg": "Recipient and Amount lists must be equal length."
-    },
-    {
-      "code": 6003,
-      "name": "NotFinalized",
-      "msg": "The launch has not been finalized yet."
-    },
-    {
-      "code": 6004,
-      "name": "NoAllocation",
-      "msg": "No allocation for this bid."
-    },
-    {
-      "code": 6005,
-      "name": "AlreadyClaimed",
-      "msg": "Tokens have already been claimed."
     }
   ],
   "types": [
@@ -626,22 +489,6 @@
           {
             "name": "timestamp",
             "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "AllocationRecorded",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "bidder",
-            "type": "pubkey"
-          },
-          {
-            "name": "amount",
-            "type": "u64"
           }
         ]
       }
@@ -727,22 +574,6 @@
                 32
               ]
             }
-          }
-        ]
-      }
-    },
-    {
-      "name": "TokensClaimed",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "bidder",
-            "type": "pubkey"
-          },
-          {
-            "name": "amount",
-            "type": "u64"
           }
         ]
       }
