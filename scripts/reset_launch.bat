@@ -5,7 +5,6 @@ echo ==========================================
 echo.
 cd /d "%~dp0\.."
 
-:: Try to fix missing paths (Explicit Path to Version)
 set SOLANA_BIN=%USERPROFILE%\.local\share\solana\install\releases\stable-90098d261e2be2f898769d9ee35141597f1a2234\solana-release\bin
 set PATH=%PATH%;%SOLANA_BIN%;%USERPROFILE%\.avm\bin
 

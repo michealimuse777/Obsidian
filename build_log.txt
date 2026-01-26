@@ -1,0 +1,22 @@
+==========================================
+     OBSIDIAN LAUNCHPAD - V2 RESET
+==========================================
+
+Using Solana Path: C:\Users\Zala\.local\share\solana\install\releases\stable-90098d261e2be2f898769d9ee35141597f1a2234\solana-release\bin
+
+[1/3] Building Smart Contract (this may take a minute)...
+WARNING: `anchor-lang` version(0.30.1) and the current CLI version(0.32.1) don't match.
+
+	This can lead to unwanted behavior. To use the same CLI version, add:
+
+	[toolchain]
+	anchor_version = "0.30.1"
+
+	to Anchor.toml
+
+
+thread 'main' panicked at platform-tools-sdk\cargo-build-sbf\src\toolchain.rs:381:19:
+called `Option::unwrap()` on a `None` value
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+Build Failed! Make sure you have Solana installed.
+Press any key to continue . . . 

@@ -6,10 +6,10 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-obsidian = "BRGaXJJS6oHN1pBPnMhZQHtSfBLmVyYk75xqetsRfib9"
+obsidian = "BBfQH32errj2SDKtZwFMDUZiT9nTdDCCzzAnFyaGFp6m"
 
 [programs.devnet]
-obsidian = "BRGaXJJS6oHN1pBPnMhZQHtSfBLmVyYk75xqetsRfib9"
+obsidian = "BBfQH32errj2SDKtZwFMDUZiT9nTdDCCzzAnFyaGFp6m"
 
 [registry]
 url = "https://api.apr.dev"

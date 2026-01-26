@@ -10,7 +10,7 @@ async function main() {
     const provider = anchor.AnchorProvider.env();
     anchor.setProvider(provider);
 
-    const programId = new PublicKey("BRGaXJJS6oHN1pBPnMhZQHtSfBLmVyYk75xqetsRfib9");
+    const programId = new PublicKey("BBfQH32errj2SDKtZwFMDUZiT9nTdDCCzzAnFyaGFp6m");
     const program = new anchor.Program(idl as any, provider) as any;
 
     console.log("Initializing Launch on Devnet...");
