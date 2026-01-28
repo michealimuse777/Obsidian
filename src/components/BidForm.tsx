@@ -62,12 +62,12 @@ export default function BidForm() {
         }
 
         const init = async () => {
-            const DEMO_MODE = true; // Global Simulation Flag
+            const DEMO_MODE = false; // Global Simulation Flag
 
             try {
                 // 1. Fetch Launch State
                 const [launchPda] = PublicKey.findProgramAddressSync(
-                    [Buffer.from("launch_v2")],
+                    [Buffer.from("launch")],
                     program.programId
                 );
 
@@ -129,7 +129,7 @@ export default function BidForm() {
 
         try {
             setErrorMessage('');
-            const DEMO_MODE = true; // Presentation Mode
+            const DEMO_MODE = false; // Presentation Mode
 
             // 1. Encryption (Real Arcium)
             setStatus('encrypting');
@@ -148,7 +148,7 @@ export default function BidForm() {
 
             // 2. Derive Accounts
             const [launchPda] = PublicKey.findProgramAddressSync(
-                [Buffer.from("launch_v1")],
+                [Buffer.from("launch")],
                 program.programId
             );
 
@@ -293,7 +293,7 @@ export default function BidForm() {
 
     // Handle Claim
     const handleClaim = async () => {
-        const DEMO_MODE = true; // CHANGED: Enabled for Presentation/Demo
+        const DEMO_MODE = false; // CHANGED: Enabled for Presentation/Demo
 
         if (DEMO_MODE) {
             setStatus('submitting');
@@ -310,7 +310,7 @@ export default function BidForm() {
             setStatus('submitting');
 
             const [launchPda] = PublicKey.findProgramAddressSync(
-                [Buffer.from("launch_v2")],
+                [Buffer.from("launch")],
                 program.programId
             );
             const [bidPda] = PublicKey.findProgramAddressSync(
