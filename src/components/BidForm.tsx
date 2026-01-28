@@ -92,7 +92,7 @@ export default function BidForm() {
 
                 // 2. Check for Existing Bid
                 const [bidPda] = PublicKey.findProgramAddressSync(
-                    [Buffer.from("bid_v2"), publicKey.toBuffer()],
+                    [Buffer.from("bid"), publicKey.toBuffer()],
                     program.programId
                 );
                 const existingBid = await program.account.bid.fetchNullable(bidPda);
@@ -153,7 +153,7 @@ export default function BidForm() {
             );
 
             const [bidPda] = PublicKey.findProgramAddressSync(
-                [Buffer.from("bid_v2"), publicKey.toBuffer()],
+                [Buffer.from("bid"), publicKey.toBuffer()],
                 program.programId
             );
 
@@ -262,7 +262,7 @@ export default function BidForm() {
     const handleViewBid = async () => {
         if (!program || !publicKey) return;
         const [bidPda] = PublicKey.findProgramAddressSync(
-            [Buffer.from("bid_v2"), publicKey.toBuffer()],
+            [Buffer.from("bid"), publicKey.toBuffer()],
             program.programId
         );
         try {
@@ -314,7 +314,7 @@ export default function BidForm() {
                 program.programId
             );
             const [bidPda] = PublicKey.findProgramAddressSync(
-                [Buffer.from("bid_v2"), publicKey.toBuffer()],
+                [Buffer.from("bid"), publicKey.toBuffer()],
                 program.programId
             );
 
