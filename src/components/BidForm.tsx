@@ -229,14 +229,14 @@ export default function BidForm() {
         } catch (err: any) {
             console.error("Bid Submission Error:", err);
 
-            // Handle "already processed"
+            // Handle "already processed" / "simulation failed"
             const errMsg = err.message || "";
-            if (errMsg.includes("already been processed") || errMsg.includes("already in use")) {
+            if (errMsg.includes("already been processed") || errMsg.includes("already in use") || errMsg.includes("simulation failed")) {
                 try {
-                    const [bidPda] = PublicKey.findProgramAddressSync([Buffer.from("bid_v2"), publicKey!.toBuffer()], program!.programId);
+                    const [bidPda] = PublicKey.findProgramAddressSync([Buffer.from("bid"), publicKey!.toBuffer()], program!.programId);
                     const existingBid = await program!.account.bid.fetchNullable(bidPda);
                     if (existingBid) {
-                        toast.success('Bid verified on-chain');
+                        toast.success('Bid already exists! Showing your bid.');
                         const bidAccount = existingBid as any;
                         setHasBid(true);
                         setBidData({
@@ -245,6 +245,7 @@ export default function BidForm() {
                             isClaimed: bidAccount.isClaimed || false,
                             isProcessed: bidAccount.isProcessed || false,
                         });
+                        setStatus('success');
                         return;
                     }
                 } catch (checkErr) { console.log(checkErr); }
