@@ -96,7 +96,7 @@ async function main() {
     console.log("📡 Connected to Devnet Program:", programId.toBase58());
 
     // C. Fetch Launch State
-    const [launchPda] = PublicKey.findProgramAddressSync([Buffer.from("launch_v2")], programId);
+    const [launchPda] = PublicKey.findProgramAddressSync([Buffer.from("launch")], programId);
     const launchState = await program.account.launch.fetchNullable(launchPda);
 
     if (!launchState) {
@@ -179,7 +179,7 @@ async function main() {
         try {
             // Derive the Bid PDA for this bidder
             const [bidPda] = PublicKey.findProgramAddressSync(
-                [Buffer.from("bid_v2"), alloc.bidder.toBuffer()],
+                [Buffer.from("bid"), alloc.bidder.toBuffer()],
                 program.programId
             );
 

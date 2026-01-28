@@ -40,10 +40,10 @@ async function main() {
     console.log(`Allocation: ${ALLOCATION_AMOUNT} OBS`);
 
     // Derive PDAs
-    const [launchPda] = PublicKey.findProgramAddressSync([Buffer.from("launch_v2")], programId);
+    const [launchPda] = PublicKey.findProgramAddressSync([Buffer.from("launch")], programId);
     const bidderPubkey = new PublicKey(BIDDER_WALLET);
     const [bidPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("bid_v2"), bidderPubkey.toBuffer()],
+        [Buffer.from("bid"), bidderPubkey.toBuffer()],
         programId
     );
 

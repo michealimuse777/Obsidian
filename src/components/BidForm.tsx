@@ -67,7 +67,7 @@ export default function BidForm() {
             try {
                 // 1. Fetch Launch State
                 const [launchPda] = PublicKey.findProgramAddressSync(
-                    [Buffer.from("launch_v2")],
+                    [Buffer.from("launch")],
                     program.programId
                 );
 
@@ -92,7 +92,7 @@ export default function BidForm() {
 
                 // 2. Check for Existing Bid
                 const [bidPda] = PublicKey.findProgramAddressSync(
-                    [Buffer.from("bid_v2"), publicKey.toBuffer()],
+                    [Buffer.from("bid"), publicKey.toBuffer()],
                     program.programId
                 );
                 const existingBid = await program.account.bid.fetchNullable(bidPda);
@@ -148,12 +148,12 @@ export default function BidForm() {
 
             // 2. Derive Accounts
             const [launchPda] = PublicKey.findProgramAddressSync(
-                [Buffer.from("launch_v2")],
+                [Buffer.from("launch")],
                 program.programId
             );
 
             const [bidPda] = PublicKey.findProgramAddressSync(
-                [Buffer.from("bid_v2"), publicKey.toBuffer()],
+                [Buffer.from("bid"), publicKey.toBuffer()],
                 program.programId
             );
 
@@ -233,7 +233,7 @@ export default function BidForm() {
             const errMsg = err.message || "";
             if (errMsg.includes("already been processed") || errMsg.includes("already in use") || errMsg.includes("simulation failed")) {
                 try {
-                    const [bidPda] = PublicKey.findProgramAddressSync([Buffer.from("bid_v2"), publicKey!.toBuffer()], program!.programId);
+                    const [bidPda] = PublicKey.findProgramAddressSync([Buffer.from("bid"), publicKey!.toBuffer()], program!.programId);
                     const existingBid = await program!.account.bid.fetchNullable(bidPda);
                     if (existingBid) {
                         toast.success('Bid already exists! Showing your bid.');
@@ -311,11 +311,11 @@ export default function BidForm() {
             setStatus('submitting');
 
             const [launchPda] = PublicKey.findProgramAddressSync(
-                [Buffer.from("launch_v2")],
+                [Buffer.from("launch")],
                 program.programId
             );
             const [bidPda] = PublicKey.findProgramAddressSync(
-                [Buffer.from("bid_v2"), publicKey.toBuffer()],
+                [Buffer.from("bid"), publicKey.toBuffer()],
                 program.programId
             );
 

@@ -36,7 +36,7 @@ async function main() {
     const program = new Program(idl, provider) as any;
     const programId = new PublicKey("BRGaXJJS6oHN1pBPnMhZQHtSfBLmVyYk75xqetsRfib9");
 
-    const [launchPda] = PublicKey.findProgramAddressSync([Buffer.from("launch_v2")], programId);
+    const [launchPda] = PublicKey.findProgramAddressSync([Buffer.from("launch")], programId);
     const launchState = await program.account.launch.fetchNullable(launchPda);
 
     console.log(`Launch authority:      ${launchState?.authority?.toBase58()}`);
