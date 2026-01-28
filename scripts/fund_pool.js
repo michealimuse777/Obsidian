@@ -25,7 +25,7 @@ async function main() {
     const programId = new PublicKey("BRGaXJJS6oHN1pBPnMhZQHtSfBLmVyYk75xqetsRfib9");
 
     console.log("Fetching Launch State to find Mint...");
-    const [launchPda] = PublicKey.findProgramAddressSync([Buffer.from("launch_v1")], programId);
+    const [launchPda] = PublicKey.findProgramAddressSync([Buffer.from("launch")], programId);
     const launchState = await program.account.launch.fetch(launchPda);
 
     const mint = launchState.mint;

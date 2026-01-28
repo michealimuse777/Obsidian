@@ -19,7 +19,7 @@ async function main() {
 
     // 2. Fetch Launch Account to find the correct Mint
     const [launchPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("launch_v1")], // Make sure this matches lib.rs seeds
+        [Buffer.from("launch")], // Make sure this matches lib.rs seeds
         program.programId
     );
 

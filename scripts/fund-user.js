@@ -23,7 +23,7 @@ async function main() {
 
     // 2. Fetch Launch Account to find the correct Mint
     const [launchPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("launch_v2")],
+        [Buffer.from("launch")],
         program.programId
     );
 

@@ -1,0 +1,35 @@
+﻿cargo : error: no 
+such command: 
+`build-sbf`
+At line:1 char:1
++ cargo build-sbf 
+--manifest-path progr
+ams/obsidian/Cargo.to
+ml 2>&1 | O ...
++ ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~
+    + CategoryInfo   
+           : 
+NotSpecified: (e    
+rror: no such 
+command    : 
+`build-sbf`:String)  
+   [], 
+RemoteException
+    + 
+FullyQualifiedError  
+  Id : 
+NativeCommandErr    
+or
+ 
+
+help: view all 
+installed commands 
+with `cargo --list`
+help: find a package 
+to install 
+`build-sbf` with 
+`cargo search 
+cargo-build-sbf`

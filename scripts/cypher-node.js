@@ -76,7 +76,7 @@ async function main() {
 
     // B. Fetch Launch State
     // USE CORRECT V1 SEED
-    const [launchPda] = PublicKey.findProgramAddressSync([Buffer.from("launch_v1")], programId);
+    const [launchPda] = PublicKey.findProgramAddressSync([Buffer.from("launch")], programId);
 
     console.log(`Checking Launch State at: ${launchPda.toBase58()}`);
     const launchState = await program.account.launch.fetchNullable(launchPda);

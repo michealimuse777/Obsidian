@@ -23,7 +23,7 @@ async function main() {
     const program = new Program(idl, provider);
     const programId = new PublicKey("BRGaXJJS6oHN1pBPnMhZQHtSfBLmVyYk75xqetsRfib9");
 
-    const [launchPda] = PublicKey.findProgramAddressSync([Buffer.from("launch_v1")], programId);
+    const [launchPda] = PublicKey.findProgramAddressSync([Buffer.from("launch")], programId);
     console.log(`Fetching Launch at: ${launchPda.toBase58()}`);
 
     const launch = await program.account.launch.fetch(launchPda);
