@@ -1,69 +1,38 @@
-<p align="center">
-  <img src="https://img.shields.io/badge/Solana-Devnet-9945FF?style=for-the-badge&logo=solana" alt="Solana Devnet" />
-  <img src="https://img.shields.io/badge/Arcium-Confidential%20Compute-6AE3FF?style=for-the-badge" alt="Arcium" />
-  <img src="https://img.shields.io/badge/Status-Live-00C853?style=for-the-badge" alt="Live" />
-</p>
 
-<h1 align="center">
-  <br>
-  🔮 OBSIDIAN
-  <br>
-  <sub>The Dark Launchpad</sub>
-</h1>
+# Obsidian | The Dark Launchpad
 
-<p align="center">
-  <strong>A privacy-preserving token launchpad on Solana powered by Arcium confidential computing.</strong>
-</p>
+**Privacy-Preserving Token Launchpad on Solana powered by Arcium Confidential Computing.**
 
-<p align="center">
-  <a href="#-the-problem">Problem</a> •
-  <a href="#-the-solution">Solution</a> •
-  <a href="#-architecture">Architecture</a> •
-  <a href="#-demo">Demo</a> •
-  <a href="#-tech-stack">Tech Stack</a> •
-  <a href="#-getting-started">Getting Started</a>
-</p>
+[![Solana Devnet](https://img.shields.io/badge/Solana-Devnet-9945FF?style=flat-square&logo=solana)](https://solana.com)
+[![Arcium Confidential Compute](https://img.shields.io/badge/Arcium-Confidential%20Compute-6AE3FF?style=flat-square)](https://arcium.com)
+[![Live Demo](https://img.shields.io/badge/Status-Live_Demo-00C853?style=flat-square)](https://obsidian-qdke.vercel.app/)
+
+**Live Application:** [https://obsidian-qdke.vercel.app/](https://obsidian-qdke.vercel.app/)
 
 ---
 
-## 🚨 The Problem
+## Executive Summary
 
-Traditional token launchpads are **fundamentally broken**:
+Obsidian addresses the critical issue of information leakage in decentralized finance auctions. By integrating Arcium's confidential computing layer with Solana's high-performance blockchain, Obsidian enables "Dark Auctions" where bid amounts remain encrypted until the auction concludes. This mechanism prevents front-running, eliminates price manipulation based on visible demand, and ensures equitable market participation.
 
-| Issue | Impact |
-|-------|--------|
-| 📊 **Public Bid Visibility** | Whales see your bid and outbid you |
-| 🤖 **MEV & Front-running** | Bots extract value before your transaction |
-| 💰 **Price Manipulation** | Bad actors inflate demand artificially |
-| ⚖️ **Unfair Allocations** | Small bidders systematically disadvantaged |
+## Core Problem
 
-> *"In DeFi, if your bid is public, you've already lost."*
+Traditional on-chain launchpads suffer from transparency paradoxes:
+*   **Public Bid Visibility:** Large bids signal market sentiment, leading to reactionary bidding.
+*   **MEV & Front-running:** Sophisticated actors extract value from pending transactions.
+*   **Price Discovery Failures:** Visible order books allow for artificial price anchoring.
+*   **Inequitable Allocations:** Small participants are often systematically disadvantaged by whale observation.
 
----
+## The Solution
 
-## 💡 The Solution
+Obsidian implements a privacy-first architecture using specific cryptographic primitives:
 
-**Obsidian** introduces **encrypted bidding** with **confidential compute**:
+1.  **Client-Side Encryption:** Bids are encrypted in the browser using the Cypher Node's public key (TweetNaCl asymmetric encryption).
+2.  **Confidential Processing:** Encrypted payloads are stored on-chain but remain readable only by the Arcium Multi-Party Computation (MPC) nodes.
+3.  **Verifiable Execution:** The Cypher Node decrypts bids within a Trusted Execution Environment (TEE), executes the allocation logic, and posts the results on-chain.
+4.  **Zero-Knowledge Principles:** Individual bid amounts are never revealed to the public or the protocol administrators.
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                                                                 │
-│   🔒 Your bid is encrypted BEFORE it leaves your browser       │
-│                                                                 │
-│   🔐 Only Arcium's MPC network can decrypt                     │
-│                                                                 │
-│   🤫 Individual bid amounts are NEVER revealed                  │
-│                                                                 │
-│   ⚖️ Fair allocation via AI scoring inside the enclave         │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-**Zero leaks. Verifiable. Secure execution inside the enclave.**
-
----
-
-## 🏗️ Architecture
+### Architecture Overview
 
 ```mermaid
 sequenceDiagram
@@ -72,204 +41,74 @@ sequenceDiagram
     participant Solana
     participant Arcium as Cypher Node (Arcium)
     
-    User->>Frontend: Enter bid amount
-    Frontend->>Frontend: Encrypt with Arcium pubkey
-    Frontend->>Solana: Submit encrypted bid
+    User->>Frontend: Input Bid Amount
+    Frontend->>Frontend: Encrypt Payload (NaCl Box)
+    Frontend->>Solana: Submit Encrypted Transaction
     
-    Note over Solana: Bid stored on-chain<br/>(encrypted, unreadable)
+    Note over Solana: Data Stored On-Chain (Opaque)
     
-    Arcium->>Solana: Fetch all encrypted bids
-    Arcium->>Arcium: Decrypt in TEE/MPC
-    Arcium->>Arcium: Run AI allocation model
-    Arcium->>Solana: Record allocations
+    Arcium->>Solana: Fetch Encrypted State
+    Arcium->>Arcium: Decrypt inside TEE/MPC context
+    Arcium->>Arcium: Execute AI Scoring & Allocation
+    Arcium->>Solana: Commit Allocation Results
     
-    User->>Solana: Claim tokens
-    Solana->>User: Transfer allocation
+    User->>Solana: Claim SPL Tokens
+    Solana->>User: Transfer Asset
 ```
 
-### Key Innovation
+## Technical Stack
 
-The **Cypher Node** operates in Arcium's confidential compute environment:
-- 🔐 **NaCl Box Encryption** — Asymmetric encryption with perfect forward secrecy
-- 🧠 **AI Scoring Model** — Evaluates bids fairly without exposing amounts
-- ⛓️ **On-Chain Proofs** — Allocations are verifiable without revealing inputs
-
----
-
-## 🎬 Demo
-
-| Step | Screenshot |
-|------|------------|
-| **1. Connect Wallet** | Dark enclave aesthetic with luminous purple accents |
-| **2. Enter Bid** | Amount encrypted client-side before submission |
-| **3. Bid Confirmed** | Encrypted payload stored on Solana |
-| **4. Allocation Revealed** | Cypher Node processes, user sees result |
-| **5. Claim Tokens** | SPL tokens transferred to user's wallet |
-
-**Live Demo:** [Your Vercel URL]
-
----
-
-## 🔧 Tech Stack
-
-<table>
-<tr>
-<td width="50%">
-
-### Blockchain Layer
-- **Solana** — High-performance L1
-- **Anchor** — Rust smart contract framework
-- **SPL Token** — Standard token operations
-
-</td>
-<td width="50%">
+### Blockchain Infrastructure
+*   **Solana:** Layer 1 blockchain for consensus and settlement.
+*   **Anchor Framework:** Rust-based smart contract development framework.
+*   **SPL Token Program:** Standardized token operations for assets and pools.
 
 ### Confidentiality Layer
-- **Arcium** — MPC infrastructure
-- **TweetNaCl** — Box encryption (curve25519-xsalsa20-poly1305)
-- **Cypher Node** — Trusted compute execution
+*   **Arcium Network:** Decentralized confidential computing network.
+*   **TweetNaCl:** Cryptographic library for Curve25519-XSalsa20-Poly1305 encryption.
+*   **Cypher Node:** Custom TypeScript execution environment for off-chain verifiable compute.
 
-</td>
-</tr>
-<tr>
-<td width="50%">
+### Frontend Interface
+*   **Next.js 15:** React framework for server-side rendering and static generation.
+*   **TailwindCSS:** Utility-first CSS framework for design system implementation.
+*   **Solana Wallet Adapter:** Standard library for wallet connection and transaction signing.
 
-### Frontend
-- **Next.js 15** — React framework
-- **TailwindCSS** — Utility-first styling
-- **Framer Motion** — Smooth animations
-- **Wallet Adapter** — Multi-wallet support
+## System Components
 
-</td>
-<td width="50%">
+### Solana Program
+The core logic resides in `programs/obsidian/src/lib.rs`. It manages:
+*   **Launch State:** Initialization of token pools and auction parameters.
+*   **Bid Ledger:** Storage of encrypted user bids.
+*   **Allocation Registry:** Recording of final token distribution.
 
-### Design System
-- **Background:** `#0B0E17` → `#120A1F`
-- **Primary:** `#9B6CFF` Luminous Purple
-- **Signal:** `#6AE3FF` ZK Cyan
-- **Glass-morphism** with encrypted enclave orb
+### Cypher Node
+Located in `scripts/run-cypher-demo.ts`, this component acts as the bridge between on-chain state and confidential processing. Ideally run within a TEE, it handles:
+*   Decryption of user bids.
+*   Execution of the AI-driven allocation model.
+*   Signing of allocation transactions.
 
-</td>
-</tr>
-</table>
+## Deployment Information
 
----
+*   **Program ID:** `8nkjktP5dWDYCkwR3fJFSuQANB1vyw5g5LTHCrxnf3CE`
+*   **Network:** Solana Devnet
+*   **Frontend URL:** [https://obsidian-qdke.vercel.app/](https://obsidian-qdke.vercel.app/)
 
-## 📂 Project Structure
+## Security Model
 
-```
-obsidian/
-├── programs/obsidian/src/
-│   └── lib.rs              # Anchor program (Rust)
-├── src/
-│   ├── app/                # Next.js pages
-│   ├── components/         # React components
-│   │   ├── Hero.tsx        # Landing hero
-│   │   ├── BidForm.tsx     # Bid submission + claim
-│   │   └── Navbar.tsx      # Wallet connection
-│   └── lib/
-│       └── arcium.ts       # Encryption utilities
-├── scripts/
-│   ├── run-cypher-demo.ts  # Cypher Node processing
-│   ├── initialize-devnet.ts # Deploy + initialize
-│   └── fund-launch-pool.ts # Fund tokens for claims
-└── README.md
-```
+The security of Obsidian relies on a hybrid model:
+1.  **Transport Security:** Data is encrypted at the client level before transmission.
+2.  **Compute Security:** Decryption keys exist only within the Arcium node context.
+3.  **State Integrity:** Solana guarantees the immutability of the encrypted ledger and the final allocation record.
+
+## Roadmap
+
+*   [x] **Phase 1:** Encrypted bidding and on-chain storage.
+*   [x] **Phase 2:** Off-chain decryption and allocation recording.
+*   [x] **Phase 3:** User claim interface and SPL token integration.
+*   [ ] **Phase 4:** Full Arcium Network integration (Distributed Key Generation).
+*   [ ] **Phase 5:** Token-2022 confidential transfer extensions.
+*   [ ] **Phase 6:** DAO governance for parameter selection.
 
 ---
 
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js 18+
-- Rust + Anchor CLI
-- Solana CLI (configured for Devnet)
-
-### Installation
-
-```bash
-# Clone repository
-git clone https://github.com/michealimuse777/Obsidian.git
-cd Obsidian
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-```
-
-### Deploy Program (Optional)
-
-```bash
-# Build and deploy to Devnet
-anchor build
-anchor deploy
-
-# Initialize launch
-npx ts-node scripts/initialize-devnet.ts
-```
-
-### Process Bids (Cypher Node)
-
-```bash
-# After users place bids, run the Cypher Node
-npx ts-node scripts/run-cypher-demo.ts
-```
-
----
-
-## 📊 Deployed Instance
-
-| Component | Value |
-|-----------|-------|
-| **Program ID** | `8nkjktP5dWDYCkwR3fJFSuQANB1vyw5g5LTHCrxnf3CE` |
-| **Network** | Solana Devnet |
-| **Frontend** | Vercel |
-
----
-
-## 🔐 Security Model
-
-| Layer | Protection |
-|-------|------------|
-| **Client** | NaCl Box encryption before network transmission |
-| **Transport** | TLS + encrypted Solana transactions |
-| **Storage** | On-chain data is encrypted, unreadable without Cypher Node |
-| **Processing** | Arcium MPC — no single party can decrypt |
-| **Verification** | On-chain allocations are publicly auditable |
-
----
-
-## 🗺️ Roadmap
-
-- [x] Encrypted bidding with Arcium
-- [x] On-chain allocation recording
-- [x] SPL token claims
-- [x] Premium dark UI aesthetic
-- [ ] Full Arcium MPC integration (multi-node threshold)
-- [ ] Token-2022 confidential transfers
-- [ ] DAO governance for launch parameters
-- [ ] Multi-round auction support
-
----
-
-## 🏆 Built For
-
-<p align="center">
-  <strong>Arcium × Solana Hackathon</strong>
-  <br><br>
-  <em>"Making DeFi fair again, one encrypted bid at a time."</em>
-</p>
-
----
-
-## 📄 License
-
-MIT License — see [LICENSE](LICENSE) for details.
-
----
-
-<p align="center">
-  <sub>Built with 🔮 by the Obsidian Team</sub>
-</p>
+*Developed for the Arcium x Solana Hackathon.*
