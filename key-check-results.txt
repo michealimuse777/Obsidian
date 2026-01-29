@@ -1,0 +1,12 @@
+Checking against Program ID: BRGaXJJS6oHN1pBPnMhZQHtSfBLmVyYk75xqetsRfib9
+
+win_keypair.json:
+  Pubkey: 4Hs5YVKrpuCVGDkLtaADjsb6uD1doKBx64R1vWRLNMAj
+  Result: ❌ No match
+
+arcium_keypair.json: Error reading/parsing - Error: bad secret key size
+
+target/deploy/obsidian-keypair.json:
+  Pubkey: H1fZtkFUVdtjLGxTiiZ1ycNYZcAHzGWkFZtRVwHm4f9h
+  Result: ❌ No match
+

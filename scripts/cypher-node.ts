@@ -92,7 +92,7 @@ async function main() {
     const program = new Program(idl, provider) as any;
 
     // Address check
-    const programId = new PublicKey("BRGaXJJS6oHN1pBPnMhZQHtSfBLmVyYk75xqetsRfib9");
+    const programId = new PublicKey("5U9cUS7pKPqfwdMWg9sXy5wtZseDbrmH3poZtAVVaoVp");
     console.log("📡 Connected to Devnet Program:", programId.toBase58());
 
     // C. Fetch Launch State

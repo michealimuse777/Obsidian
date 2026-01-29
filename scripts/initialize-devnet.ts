@@ -7,17 +7,23 @@ const idl = JSON.parse(fs.readFileSync("./src/utils/obsidian-idl.json", "utf8"))
 
 async function main() {
     // Configure the client to use the local cluster.
-    const provider = anchor.AnchorProvider.env();
+    // Manual Provider Setup (bypass env vars)
+    const connection = new anchor.web3.Connection("https://api.devnet.solana.com");
+    const rawKey = JSON.parse(fs.readFileSync("./win_keypair.json", "utf8"));
+    const keypair = anchor.web3.Keypair.fromSecretKey(new Uint8Array(rawKey));
+    const wallet = new anchor.Wallet(keypair);
+    const provider = new anchor.AnchorProvider(connection, wallet, {});
+
     anchor.setProvider(provider);
 
-    const programId = new PublicKey("BRGaXJJS6oHN1pBPnMhZQHtSfBLmVyYk75xqetsRfib9");
+    const programId = new PublicKey("8nkjktP5dWDYCkwR3fJFSuQANB1vyw5g5LTHCrxnf3CE");
     const program = new anchor.Program(idl as any, provider) as any;
 
     console.log("Initializing Launch on Devnet...");
 
     // 1. Derive PDAs
     const [launchPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("launch")],
+        [Buffer.from("launch_v2")],
         program.programId
     );
 
@@ -40,7 +46,22 @@ async function main() {
         null,
         6 // 6 decimals like USDC
     );
+
     console.log("Created Test Mint:", mint.toBase58());
+
+    // Wait for Mint to be confirmed
+    console.log("Waiting for Mint to be available...");
+    let retries = 10;
+    while (retries > 0) {
+        const info = await provider.connection.getAccountInfo(mint);
+        if (info) {
+            console.log("Mint Found on-chain!");
+            break;
+        }
+        console.log("Waiting...");
+        await new Promise(r => setTimeout(r, 2000));
+        retries--;
+    }
 
     // 3. Derive Launch Pool ATA
     const launchPool = await getAssociatedTokenAddress(

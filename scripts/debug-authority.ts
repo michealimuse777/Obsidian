@@ -34,7 +34,7 @@ async function main() {
     const idlPath = path.resolve(__dirname, "../src/utils/obsidian-idl.json");
     const idl = JSON.parse(fs.readFileSync(idlPath, "utf-8"));
     const program = new Program(idl, provider) as any;
-    const programId = new PublicKey("BRGaXJJS6oHN1pBPnMhZQHtSfBLmVyYk75xqetsRfib9");
+    const programId = new PublicKey("5U9cUS7pKPqfwdMWg9sXy5wtZseDbrmH3poZtAVVaoVp");
 
     const [launchPda] = PublicKey.findProgramAddressSync([Buffer.from("launch")], programId);
     const launchState = await program.account.launch.fetchNullable(launchPda);

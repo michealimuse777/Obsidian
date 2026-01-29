@@ -1,7 +1,7 @@
 import { PublicKey } from "@solana/web3.js";
 
 // Devnet Program ID
-export const OBSIDIAN_PROGRAM_ID = new PublicKey("BRGaXJJS6oHN1pBPnMhZQHtSfBLmVyYk75xqetsRfib9");
+export const OBSIDIAN_PROGRAM_ID = new PublicKey("8nkjktP5dWDYCkwR3fJFSuQANB1vyw5g5LTHCrxnf3CE");
 
 // Token Program ID (Standard SPL Token for now, upgrade to 2022 later)
 export const TOKEN_PROGRAM_ID = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");

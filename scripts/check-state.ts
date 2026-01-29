@@ -29,14 +29,17 @@ async function main() {
     const idlPath = path.resolve(__dirname, "../src/utils/obsidian-idl.json");
     const idl = JSON.parse(fs.readFileSync(idlPath, "utf-8"));
     const program = new Program(idl, provider) as any;
-    const programId = new PublicKey("BRGaXJJS6oHN1pBPnMhZQHtSfBLmVyYk75xqetsRfib9");
+    const programId = new PublicKey("5U9cUS7pKPqfwdMWg9sXy5wtZseDbrmH3poZtAVVaoVp");
 
     // Check Launch State
-    const [launchPda] = PublicKey.findProgramAddressSync([Buffer.from("launch")], programId);
-    const launchState = await program.account.launch.fetchNullable(launchPda);
+    const [launchPDA] = PublicKey.findProgramAddressSync(
+        [Buffer.from("launch_v2")],
+        program.programId
+    );
+    const launchState = await program.account.launch.fetchNullable(launchPDA);
 
     console.log("═══ LAUNCH STATE ═══");
-    console.log(`PDA: ${launchPda.toBase58()}`);
+    console.log(`PDA: ${launchPDA.toBase58()}`);
     console.log(`Is Finalized: ${launchState?.isFinalized}`);
     console.log(`Total Tokens: ${launchState?.totalTokens?.toString()}`);
     console.log(`Tokens Distributed: ${launchState?.tokensDistributed?.toString()}`);
