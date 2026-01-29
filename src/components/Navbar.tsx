@@ -10,29 +10,31 @@ const WalletMultiButton = dynamic(
 
 export default function Navbar() {
     return (
-        <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-6 md:px-12 backdrop-blur-sm pointer-events-none">
-            <div className="flex items-center gap-2 pointer-events-auto">
-                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center font-bold text-black font-display text-lg">
+        <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-5 md:px-12 backdrop-blur-md bg-[#0B0E17]/60 border-b border-[#9B6CFF]/10 pointer-events-none">
+            {/* Logo */}
+            <div className="flex items-center gap-3 pointer-events-auto">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#9B6CFF] to-[#6AE3FF] flex items-center justify-center font-bold text-black font-display text-lg shadow-[0_0_20px_rgba(155,108,255,0.4)]">
                     O
                 </div>
-                <span className="font-display font-medium text-lg tracking-tight">OBSIDIAN</span>
+                <span className="font-display font-semibold text-lg tracking-tight text-white/95">
+                    OBSIDIAN
+                </span>
             </div>
 
+            {/* Wallet Button */}
             <div className="pointer-events-auto">
-                {/* 
-                  WalletMultiButton is provided by the adapter UI. 
-                  We override some styles via globals.css or implicit class names if needed, 
-                  but standard button is fine for MVP.
-                */}
                 <WalletMultiButton style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: 'linear-gradient(135deg, rgba(155, 108, 255, 0.15) 0%, rgba(106, 227, 255, 0.08) 100%)',
+                    border: '1px solid rgba(155, 108, 255, 0.3)',
                     borderRadius: '9999px',
                     fontFamily: 'var(--font-ibm-mono)',
-                    fontSize: '0.875rem',
+                    fontSize: '0.8rem',
+                    letterSpacing: '0.05em',
                     height: 'auto',
-                    padding: '0.5rem 1rem',
-                    color: 'white'
+                    padding: '0.6rem 1.25rem',
+                    color: '#C2A8FF',
+                    boxShadow: '0 0 20px rgba(155, 108, 255, 0.15)',
+                    transition: 'all 0.3s ease'
                 }} />
             </div>
         </header>

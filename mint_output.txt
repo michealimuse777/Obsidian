@@ -1,0 +1,12 @@
+(node:16796) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Zala/.gemini/antigravity/scratch/obsidian/scripts/mint-tokens.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\Zala\.gemini\antigravity\scratch\obsidian\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+bigint: Failed to load bindings, pure JS will be used (try npm run rebuild?)
+Minting 1,000 tokens to 3Vyn8g2avGj3EaWDv1mCfo5Qd72XttvTHWCmgcH7EWSw...
+TokenAccountNotFoundError
+    at unpackAccount (file:///C:/Users/Zala/.gemini/antigravity/scratch/obsidian/node_modules/@solana/spl-token/src/state/account.ts:170:22)
+    at getAccount (file:///C:/Users/Zala/.gemini/antigravity/scratch/obsidian/node_modules/@solana/spl-token/src/state/account.ts:103:12)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getOrCreateAssociatedTokenAccount (file:///C:/Users/Zala/.gemini/antigravity/scratch/obsidian/node_modules/@solana/spl-token/src/actions/getOrCreateAssociatedTokenAccount.ts:79:23)
+    at async main (file:///C:/Users/Zala/.gemini/antigravity/scratch/obsidian/scripts/mint-tokens.ts:30:26)

@@ -82,12 +82,12 @@ async function main() {
     const idlPath = path.resolve(__dirname, "../src/utils/obsidian-idl.json");
     const idl = JSON.parse(fs.readFileSync(idlPath, "utf-8"));
     const program = new Program(idl, provider) as any;
-    const programId = new PublicKey("5U9cUS7pKPqfwdMWg9sXy5wtZseDbrmH3poZtAVVaoVp");
+    const programId = new PublicKey("8nkjktP5dWDYCkwR3fJFSuQANB1vyw5g5LTHCrxnf3CE");
 
     console.log(`📡 Connected to Program: ${programId.toBase58()}`);
 
     // 3. Fetch Launch State
-    const [launchPda] = PublicKey.findProgramAddressSync([Buffer.from("launch")], programId);
+    const [launchPda] = PublicKey.findProgramAddressSync([Buffer.from("launch_v2")], programId);
     const launchState = await program.account.launch.fetchNullable(launchPda);
 
     if (!launchState) {
@@ -166,7 +166,7 @@ async function main() {
 
         try {
             const [bidPda] = PublicKey.findProgramAddressSync(
-                [Buffer.from("bid"), bidAccount.bidder.toBuffer()],
+                [Buffer.from("bid_v2"), bidAccount.bidder.toBuffer()],
                 program.programId
             );
 

@@ -17,8 +17,8 @@ export default function Home() {
         </div>
 
         {/* Footer/Trust Indicators */}
-        <div className="mt-auto pt-20 pb-10 text-center text-white/20 text-xs font-mono">
-          <p>Powered by Solana & Arcium Confidential Computing</p>
+        <div className="mt-auto pt-20 pb-10 text-center text-[#C2A8FF]/40 text-xs font-mono">
+          <p>Powered by <span className="text-[#9B6CFF]">Solana</span> & <span className="text-[#6AE3FF]">Arcium</span> Confidential Computing</p>
         </div>
       </div>
     </main>
