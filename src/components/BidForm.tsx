@@ -281,13 +281,30 @@ export default function BidForm() {
     };
 
     // Loading State
-    if ((!launchState && program && !bidData) || (publicKey && isCheckingBid)) {
+    if ((!launchState && program && !bidData && !errorMessage) || (publicKey && isCheckingBid)) {
         return (
             <div className="w-full max-w-sm mx-auto p-8 backdrop-blur-xl bg-black/40 rounded-xl border border-white/5 text-center">
                 <Loader2 className="w-6 h-6 animate-spin mx-auto text-white/30 mb-4" />
                 <p className="text-xs font-mono text-white/50">
                     {isCheckingBid ? "Verifying eligibility..." : "Loading Launch State..."}
                 </p>
+            </div>
+        );
+    }
+
+    // Launch State Error (Prevent Infinite Loading)
+    if (!launchState && !isCheckingBid && program && !bidData) {
+        return (
+            <div className="w-full max-w-sm mx-auto p-8 backdrop-blur-xl bg-red-500/10 rounded-xl border border-red-500/20 text-center">
+                <p className="text-xs font-mono text-red-200/70 mb-4">
+                    Launch State Not Found
+                </p>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="text-xs font-mono uppercase tracking-widest text-red-400 hover:text-red-300 border-b border-red-400/30"
+                >
+                    Retry
+                </button>
             </div>
         );
     }
