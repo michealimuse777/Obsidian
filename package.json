@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "init-v3": "node scripts/init_v3.js",
     "init-devnet": "ts-node scripts/initialize-devnet.ts"
   },
   "dependencies": {
