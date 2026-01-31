@@ -92,6 +92,8 @@ Located in `scripts/run-cypher-demo.ts`, this component acts as the bridge betwe
 *   **Program ID:** `8nkjktP5dWDYCkwR3fJFSuQANB1vyw5g5LTHCrxnf3CE`
 *   **Network:** Solana Devnet
 *   **Frontend URL:** [https://obsidian-qdke.vercel.app/](https://obsidian-qdke.vercel.app/)
+*   **Demonstration Mode:** The live application is currently configured in **Simulation Mode** to facilitate immediate testing and hackathon review. This enables users to experience the full encrypted bidding and claiming flow without requiring Devnet SOL or waiting for block confirmations.
+
 
 ## Security Model
 
