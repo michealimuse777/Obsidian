@@ -2,9 +2,7 @@ import { useAnchorWallet, useConnection } from "@solana/wallet-adapter-react";
 import { AnchorProvider, Program, Idl } from "@coral-xyz/anchor";
 import { useMemo } from "react";
 import idl from "../utils/obsidian-idl.json";
-import { OBSIDIAN_PROGRAM_ID } from "../utils/constants";
-
-const PROGRAM_ID = OBSIDIAN_PROGRAM_ID;
+import { PROGRAM_ID } from "../config/network";
 
 export const useProgram = () => {
     const { connection } = useConnection();

@@ -1,12 +1,16 @@
 import Hero from '@/components/Hero';
 import BidForm from '@/components/BidForm';
 import Navbar from '@/components/Navbar';
+import NetworkBadge from '@/components/NetworkBadge';
 
 export default function Home() {
   return (
     <main className="min-h-screen relative flex flex-col">
       {/* Navbar Placeholder */}
       <Navbar />
+
+      {/* Network Indicator */}
+      <NetworkBadge />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-start pt-20 pb-20 gap-12">
