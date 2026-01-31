@@ -9,6 +9,8 @@
 
 **Live Application:** [https://obsidian-qdke.vercel.app/](https://obsidian-qdke.vercel.app/)
 
+**Presentation Video:** [https://youtu.be/SBUsO_uib0Q](https://youtu.be/SBUsO_uib0Q?si=0CsM-NCemgf2fTt2)
+
 ---
 
 ## Executive Summary
