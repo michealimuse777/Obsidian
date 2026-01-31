@@ -87,7 +87,7 @@ async function main() {
     console.log(`📡 Connected to Program: ${programId.toBase58()}`);
 
     // 3. Fetch Launch State
-    const [launchPda] = PublicKey.findProgramAddressSync([Buffer.from("launch_v2")], programId);
+    const [launchPda] = PublicKey.findProgramAddressSync([Buffer.from("launch_v3")], programId);
     const launchState = await program.account.launch.fetchNullable(launchPda);
 
     if (!launchState) {
@@ -166,7 +166,7 @@ async function main() {
 
         try {
             const [bidPda] = PublicKey.findProgramAddressSync(
-                [Buffer.from("bid_v2"), bidAccount.bidder.toBuffer()],
+                [Buffer.from("bid_v3"), bidAccount.bidder.toBuffer()],
                 program.programId
             );
 
