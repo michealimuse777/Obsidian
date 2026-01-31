@@ -57,29 +57,22 @@ async function main() {
 
     // 3. Initialize Launch
     console.log("\n2. Initializing Launch...");
-    try {
-        const tx = await program.methods
-            .initializeLaunch(new anchor.BN(1_000_000_000), new anchor.BN(10_000))
-            .accounts({
-                launch: launchPda,
-                authority: payer.publicKey,
-                mint: mint,
-                launchPool: await anchor.utils.token.associatedAddress({ mint, owner: launchPda }),
-                systemProgram: SystemProgram.programId,
-                tokenProgram: TOKEN_PROGRAM_ID, // Use explicit token program ID
-                // associatedTokenProgram will be inferred or we can add it if needed
-            })
-            .rpc();
+    // 3. Initialize Launch
+    console.log("\n2. Initializing Launch...");
+    // REMOVED TRY/CATCH to see actual error
+    const tx = await program.methods
+        .initializeLaunch(new anchor.BN(1_000_000_000), new anchor.BN(10_000))
+        .accounts({
+            launch: launchPda,
+            authority: payer.publicKey,
+            mint: mint,
+            launchPool: await anchor.utils.token.associatedAddress({ mint, owner: launchPda }),
+            systemProgram: SystemProgram.programId,
+            tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .rpc();
 
-        console.log(`✅ Initialized! Tx: ${tx}`);
-    } catch (e) {
-        if (e.message && e.message.includes("already in use")) {
-            console.log("⚠️  Launch PDA already initialized. Skipping init.");
-        } else {
-            console.error("Initialization Error:", e);
-            // Don't throw, let's try to fund it anyway just in case
-        }
-    }
+    console.log(`✅ Initialized! Tx: ${tx}`);
 
     // 4. Fund the Launch Pool (for future claims)
     console.log("\n3. Funding Launch Pool...");

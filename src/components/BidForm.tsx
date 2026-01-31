@@ -62,7 +62,7 @@ export default function BidForm() {
         }
 
         const init = async () => {
-            const DEMO_MODE = false; // Global Simulation Flag
+            const DEMO_MODE = true; // Global Simulation Flag
 
             try {
                 // 1. Fetch Launch State
@@ -135,7 +135,7 @@ export default function BidForm() {
 
         try {
             setErrorMessage('');
-            const DEMO_MODE = false; // Presentation Mode
+            const DEMO_MODE = true; // Presentation Mode
 
             // 1. Encryption (Real Arcium)
             setStatus('encrypting');
@@ -394,7 +394,7 @@ export default function BidForm() {
 
     // DASHBOARD VIEW (If Bid Exists)
     if (bidData) {
-        const DEMO_MODE = false;
+        const DEMO_MODE = true;
         const isAuctionFinalized = DEMO_MODE || launchState?.isFinalized || false;
         const hasAllocation = DEMO_MODE || (bidData.allocation || 0) > 0;
         const canClaim = isAuctionFinalized && hasAllocation && !bidData.isClaimed;
