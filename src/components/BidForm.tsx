@@ -74,7 +74,10 @@ export default function BidForm() {
                 let launchAccount = null;
                 try {
                     launchAccount = await program.account.launch.fetchNullable(launchPda);
-                } catch (e) { console.log("Account fetch failed, using mock"); }
+                } catch (e: any) {
+                    console.error("Account fetch failed:", e);
+                    setErrorMessage(`Launch Account Not Found (${process.env.NEXT_PUBLIC_NETWORK || 'local'}). Error: ${e.message}`);
+                }
 
                 if (launchAccount) {
                     setLaunchState(launchAccount as any);
@@ -88,6 +91,9 @@ export default function BidForm() {
                         totalTokens: new BN(1_000_000_000),
                         isFinalized: false,
                     } as any);
+                } else {
+                    console.error("Launch Account is null (not found on-chain)");
+                    setErrorMessage(`Launch V3 Not Found on ${process.env.NEXT_PUBLIC_NETWORK || 'local'}. Ensure env is set to devnet.`);
                 }
 
                 // 2. Check for Existing Bid
