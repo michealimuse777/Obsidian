@@ -10,7 +10,6 @@ import * as spl from '@solana/spl-token';
 import { BN } from '@coral-xyz/anchor';
 import { toast } from 'sonner';
 import { encryptBid, deriveArciumAccounts, waitForComputation } from '@/lib/arcium';
-import { randomBytes } from 'crypto';
 
 export default function BidForm() {
     const { program, provider } = useProgram();
@@ -166,11 +165,11 @@ export default function BidForm() {
             }
 
             // Generate random computation offset
-            const computationOffsetBytes = randomBytes(8);
+            const computationOffsetBytes = Buffer.from(crypto.getRandomValues(new Uint8Array(8)));
             const computationOffset = new BN(computationOffsetBytes, "hex");
 
             // Derive Arcium accounts
-            const arciumAccounts = deriveArciumAccounts(
+            const arciumAccounts = await deriveArciumAccounts(
                 program.programId,
                 computationOffsetBytes,
                 "compute_winner"

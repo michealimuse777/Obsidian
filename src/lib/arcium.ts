@@ -4,30 +4,23 @@
  * Real Arcium v0.7.0 encryption using x25519 key exchange and RescueCipher.
  * Replaces the previous NaCl simulation.
  *
- * Flow:
- *   1. Generate ephemeral x25519 keypair
- *   2. Fetch MXE's x25519 public key from on-chain
- *   3. Derive shared secret via ECDH
- *   4. Encrypt bid amount using RescueCipher
- *   5. Return ciphertext + pubkey + nonce for on-chain submission
+ * NOTE: @arcium-hq/client depends on Node.js `fs` module, so we use
+ * dynamic imports and lazy initialization to avoid SSR/browser bundle issues.
+ * The encryption primitives (x25519 + RescueCipher) work in the browser.
+ * The account derivation helpers are imported dynamically when needed.
  */
 
-import { x25519 } from "@noble/curves/ed25519";
-import {
-    RescueCipher,
-    getMXEPublicKeyWithRetry,
-    getArciumEnv,
-    getCompDefAccAddress,
-    getCompDefAccOffset,
-    getComputationAccAddress,
-    getClusterAccAddress,
-    getMXEAccAddress,
-    getMempoolAccAddress,
-    getExecutingPoolAccAddress,
-    awaitComputationFinalization,
-} from "@arcium-hq/client";
 import type { AnchorProvider } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
+
+/**
+ * Lazily loads the Arcium client module.
+ * This avoids bundling Node.js-only code into the client-side bundle at compile time.
+ */
+async function getArciumClient() {
+    const client = await import("@arcium-hq/client");
+    return client;
+}
 
 /**
  * Encrypts a bid amount for submission to the Arcium MPC network.
@@ -42,18 +35,23 @@ export async function encryptBid(
     provider: AnchorProvider,
     programId: PublicKey
 ) {
+    const { x25519, RescueCipher, getMXEPublicKey } = await getArciumClient();
+
     // Generate ephemeral x25519 keypair for this bid
     const privateKey = x25519.utils.randomSecretKey();
     const publicKey = x25519.getPublicKey(privateKey);
 
     // Fetch the MXE's x25519 public key from on-chain
-    const mxePublicKey = await getMXEPublicKeyWithRetry(provider, programId);
+    const mxePublicKey = await getMXEPublicKey(provider, programId);
 
     // Derive shared secret via ECDH
-    const sharedSecret = x25519.getSharedSecret(privateKey, mxePublicKey);
+    const sharedSecret = x25519.getSharedSecret(privateKey, mxePublicKey as any);
+    if (!sharedSecret) {
+        throw new Error("Failed to derive shared secret — invalid MXE public key");
+    }
 
     // Initialize RescueCipher with the shared secret
-    const cipher = new RescueCipher(sharedSecret);
+    const cipher = new RescueCipher(sharedSecret as any);
 
     // Generate random nonce (16 bytes)
     const nonce = new Uint8Array(16);
@@ -66,8 +64,8 @@ export async function encryptBid(
         ciphertext: ciphertext[0],
         publicKey: Array.from(publicKey) as number[],
         nonce,
-        cipher, // Keep cipher for decrypting results later
-        privateKey, // Keep for result decryption
+        cipher,
+        privateKey,
     };
 }
 
@@ -75,21 +73,37 @@ export async function encryptBid(
  * Derives all Arcium-required account addresses for a computation.
  *
  * @param programId - Obsidian program ID
- * @param computationOffset - Random offset for this computation
+ * @param computationOffset - Random offset for this computation (8 bytes)
  * @param compDefName - Name of the encrypted instruction (e.g., "compute_winner")
  * @returns Object with all derived account addresses
  */
-export function deriveArciumAccounts(
+export async function deriveArciumAccounts(
     programId: PublicKey,
     computationOffset: Buffer,
     compDefName: string
 ) {
+    const {
+        getArciumEnv,
+        getCompDefAccAddress,
+        getCompDefAccOffset,
+        getComputationAccAddress,
+        getClusterAccAddress,
+        getMXEAccAddress,
+        getMempoolAccAddress,
+        getExecutingPoolAccAddress,
+        getFeePoolAccAddress,
+        getClockAccAddress,
+    } = await getArciumClient();
+
     const arciumEnv = getArciumEnv();
+
+    const compDefOffset = getCompDefAccOffset(compDefName);
+    const compDefOffsetNum = Buffer.from(compDefOffset as any).readUInt32LE();
 
     return {
         computationAccount: getComputationAccAddress(
             arciumEnv.arciumClusterOffset,
-            computationOffset
+            computationOffset as any
         ),
         clusterAccount: getClusterAccAddress(arciumEnv.arciumClusterOffset),
         mxeAccount: getMXEAccAddress(programId),
@@ -97,8 +111,10 @@ export function deriveArciumAccounts(
         executingPool: getExecutingPoolAccAddress(arciumEnv.arciumClusterOffset),
         compDefAccount: getCompDefAccAddress(
             programId,
-            Buffer.from(getCompDefAccOffset(compDefName)).readUInt32LE()
+            compDefOffsetNum
         ),
+        poolAccount: getFeePoolAccAddress(),
+        clockAccount: getClockAccAddress(),
     };
 }
 
@@ -112,12 +128,14 @@ export function deriveArciumAccounts(
  */
 export async function waitForComputation(
     provider: AnchorProvider,
-    computationOffset: Buffer,
+    computationOffset: Uint8Array | Buffer,
     programId: PublicKey
 ): Promise<string> {
+    const { awaitComputationFinalization } = await getArciumClient();
+
     return await awaitComputationFinalization(
         provider,
-        computationOffset,
+        computationOffset as any,
         programId,
         "confirmed"
     );
