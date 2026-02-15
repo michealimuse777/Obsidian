@@ -3,14 +3,27 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
+use arcium_anchor::prelude::*;
 
 declare_id!("8nkjktP5dWDYCkwR3fJFSuQANB1vyw5g5LTHCrxnf3CE");
 
-#[program]
-pub mod obsidian {
+// Computation definition offsets — unique IDs for each encrypted instruction
+const COMP_DEF_OFFSET_COMPUTE_WINNER: u32 = comp_def_offset("compute_winner");
+const COMP_DEF_OFFSET_COMPUTE_ALLOCATION: u32 = comp_def_offset("compute_allocation");
+
+#[arcium_program]
+pub mod obsidian_auction {
     use super::*;
 
-    pub fn initialize_launch(ctx: Context<InitializeLaunch>, total_tokens: u64, max_allocation: u64) -> Result<()> {
+    // ═══════════════════════════════════════════════════════════
+    // STEP 1: Initialize Auction (Non-Confidential)
+    // ═══════════════════════════════════════════════════════════
+
+    pub fn initialize_launch(
+        ctx: Context<InitializeLaunch>,
+        total_tokens: u64,
+        max_allocation: u64,
+    ) -> Result<()> {
         let launch = &mut ctx.accounts.launch;
         launch.authority = ctx.accounts.authority.key();
         launch.mint = ctx.accounts.mint.key();
@@ -18,159 +31,227 @@ pub mod obsidian {
         launch.total_tokens = total_tokens;
         launch.max_allocation = max_allocation;
         launch.tokens_distributed = 0;
+        launch.bid_count = 0;
         launch.is_finalized = false;
-        launch.bump = ctx.bumps.launch; // FIX: Store bump for PDA signing
+        launch.winner = Pubkey::default();
+        launch.winning_amount = 0;
+        launch.bump = ctx.bumps.launch;
         Ok(())
     }
 
-    pub fn submit_encrypted_bid(ctx: Context<SubmitBid>, encrypted_bid: Vec<u8>, amount: u64) -> Result<()> {
-        let bid = &mut ctx.accounts.bid;
-        let launch = &mut ctx.accounts.launch;
-        
-        require!(!launch.is_finalized, ErrorCode::LaunchFinalized);
-        
-        // Transfer Tokens (Public Amount for Audit, Payload is Encrypted)
-        // In a full C-SPL implementation, this would use `transfer_encrypt` or rely on the user to have proof.
-        // For this MVP step, we execute a TransferChecked to ensure the user funds the bid.
-        anchor_spl::token_interface::transfer_checked(
-            CpiContext::new(
-                ctx.accounts.token_program.to_account_info(),
-                anchor_spl::token_interface::TransferChecked {
-                    from: ctx.accounts.from.to_account_info(),
-                    mint: ctx.accounts.mint.to_account_info(),
-                    to: ctx.accounts.to.to_account_info(),
-                    authority: ctx.accounts.bidder.to_account_info(),
-                },
-            ),
-            amount,
-            ctx.accounts.mint.decimals,
-        )?;
+    // ═══════════════════════════════════════════════════════════
+    // STEP 2: Initialize Computation Definitions (One-Time Setup)
+    // ═══════════════════════════════════════════════════════════
 
-        // Update Logic accounting
-        // launch.tokens_distributed += 0; // Launch tokens are distributed AT THE END, not now. 
-        // We are collecting bids (USDC/Payment Token).
-        // Wait, the `launch.launch_pool` is what? The destination for user funds? YES.
-        
-        bid.bidder = ctx.accounts.bidder.key();
-        bid.encrypted_data = encrypted_bid;
-        bid.is_processed = false;
-        bid.allocation = 0;
-        bid.is_claimed = false;
-        
+    /// Registers the `compute_winner` encrypted instruction with Arcium.
+    /// Must be called once before any bids can be processed.
+    pub fn init_winner_comp_def(ctx: Context<InitWinnerCompDef>) -> Result<()> {
+        init_comp_def(ctx.accounts, None, None)?;
         Ok(())
     }
 
-    pub fn run_ai_allocation(_ctx: Context<RunAi>) -> Result<()> {
-        // In a real Arcium integration, this might trigger a CPI or emit an event 
-        // that the Arcium nodes listen to.
-        emit!(AiProcessingStarted {
-            timestamp: Clock::get()?.unix_timestamp,
-        });
+    /// Registers the `compute_allocation` encrypted instruction with Arcium.
+    /// Must be called once before allocations can be computed.
+    pub fn init_allocation_comp_def(ctx: Context<InitAllocationCompDef>) -> Result<()> {
+        init_comp_def(ctx.accounts, None, None)?;
         Ok(())
     }
 
-    pub fn finalize_and_distribute<'info>(
-        ctx: Context<'_, '_, '_, 'info, Finalize<'info>>, 
-        allocation_proof: Vec<u8>, 
-        recipients: Vec<Pubkey>, 
-        amounts: Vec<u64>
+    // ═══════════════════════════════════════════════════════════
+    // STEP 3: Submit Encrypted Bid (Queues MPC Computation)
+    // ═══════════════════════════════════════════════════════════
+
+    /// Accepts an encrypted bid and queues it for MPC processing.
+    ///
+    /// The bid amount is encrypted client-side using the MXE's x25519 public key
+    /// and the RescueCipher. The Solana program never sees plaintext.
+    ///
+    /// Flow:
+    ///   1. Client encrypts bid with MXE pubkey
+    ///   2. This instruction stores encrypted data on-chain
+    ///   3. `queue_computation` submits to Arcium's on-chain mempool
+    ///   4. MPC cluster picks up, decrypts jointly, executes `compute_winner`
+    ///   5. Result returned via `compute_winner_callback`
+    pub fn submit_encrypted_bid(
+        ctx: Context<SubmitBid>,
+        computation_offset: u64,
+        encrypted_amount: [u8; 32],
+        pub_key: [u8; 32],
+        nonce: u128,
     ) -> Result<()> {
         let launch = &mut ctx.accounts.launch;
         require!(!launch.is_finalized, ErrorCode::LaunchFinalized);
-        require!(ctx.accounts.authority.key() == launch.authority, ErrorCode::Unauthorized);
-        require!(recipients.len() == amounts.len(), ErrorCode::InvalidAllocationInput);
 
-        // Iterate and distribute
-        for (i, recipient) in recipients.iter().enumerate() {
-            let amount = amounts[i];
-            
-            if i < ctx.remaining_accounts.len() {
-                let dest_account = &ctx.remaining_accounts[i];
-                
-                // Verify the remaining account matches the recipient in the list
-                require!(dest_account.key() == *recipient, ErrorCode::InvalidAllocationInput);
-                
-                // CPI to Transfer
-                // Signer Seeds for Launch PDA (which owns launch_pool)
-                let bump_seed = launch.bump;
-                let seeds = &[b"launch_v3".as_ref(), &[bump_seed]];
-                let signer = &[&seeds[..]];
+        // Store bid metadata (non-confidential fields only)
+        let bid = &mut ctx.accounts.bid;
+        bid.bidder = ctx.accounts.bidder.key();
+        bid.is_processed = false;
+        bid.allocation = 0;
+        bid.is_claimed = false;
 
-                anchor_spl::token_interface::transfer_checked(
-                    CpiContext::new_with_signer(
-                        ctx.accounts.token_program.to_account_info(),
-                        anchor_spl::token_interface::TransferChecked {
-                            from: ctx.accounts.launch_pool.to_account_info(),
-                            mint: ctx.accounts.mint.to_account_info(),
-                            to: dest_account.clone(),
-                            authority: launch.to_account_info(),
-                        },
-                        signer
-                    ),
-                    amount,
-                    ctx.accounts.mint.decimals,
-                )?;
-                
-                launch.tokens_distributed += amount;
-            }
-        }
+        // Increment bid counter
+        launch.bid_count += 1;
 
-        launch.is_finalized = true;
-        
-        emit!(LaunchFinalized {
-            proof_hash: anchor_lang::solana_program::hash::hash(&allocation_proof).to_bytes(),
+        // Build encrypted arguments for the MPC computation
+        // The ArgBuilder matches the Arcis `compute_winner` signature:
+        //   bid_a: Enc<Mxe, BidInput { amount: u64 }>
+        // For Mxe-encrypted inputs, we omit x25519_pubkey and use plaintext nonce
+        let args = ArgBuilder::new()
+            .plaintext_u128(nonce)
+            .encrypted_u64(encrypted_amount)
+            .build();
+
+        // Set the sign PDA bump for Arcium CPI
+        ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
+
+        // Queue the computation for MPC execution
+        // The MPC cluster will:
+        //   1. Decrypt the bid inside MPC
+        //   2. Execute the compute_winner logic
+        //   3. Return result via callback
+        queue_computation(
+            ctx.accounts,
+            computation_offset,
+            args,
+            vec![ComputeWinnerCallback::callback_ix(
+                computation_offset,
+                &ctx.accounts.mxe_account,
+                &[], // No additional custom accounts
+            )?],
+            1, // Number of callback transactions
+            0, // Priority fee (0 = no priority)
+        )?;
+
+        emit!(BidSubmitted {
+            bidder: bid.bidder,
+            computation_offset,
         });
 
         Ok(())
     }
 
-    /// Record allocation for a bid (called by Cypher Node authority)
+    // ═══════════════════════════════════════════════════════════
+    // STEP 4: MPC Result Callback (Called by Arcium Network)
+    // ═══════════════════════════════════════════════════════════
+
+    /// Called automatically by the MPC cluster when `compute_winner` finishes.
+    ///
+    /// The output contains the encrypted winning bid amount.
+    /// We verify the MPC cluster's signature and record the result.
+    #[arcium_callback(encrypted_ix = "compute_winner")]
+    pub fn compute_winner_callback(
+        ctx: Context<ComputeWinnerCallback>,
+        output: SignedComputationOutputs<ComputeWinnerOutput>,
+    ) -> Result<()> {
+        let result = match output.verify_output(
+            &ctx.accounts.cluster_account,
+            &ctx.accounts.computation_account,
+        ) {
+            Ok(ComputeWinnerOutput { field_0 }) => field_0,
+            Err(e) => {
+                msg!("MPC verification failed: {}", e);
+                return Err(ErrorCode::AbortedComputation.into());
+            }
+        };
+
+        emit!(WinnerComputed {
+            winning_ciphertext: result.ciphertexts[0],
+            nonce: result.nonce.to_le_bytes(),
+        });
+
+        Ok(())
+    }
+
+    /// Called automatically by the MPC cluster when `compute_allocation` finishes.
+    #[arcium_callback(encrypted_ix = "compute_allocation")]
+    pub fn compute_allocation_callback(
+        ctx: Context<ComputeAllocationCallback>,
+        output: SignedComputationOutputs<ComputeAllocationOutput>,
+    ) -> Result<()> {
+        let result = match output.verify_output(
+            &ctx.accounts.cluster_account,
+            &ctx.accounts.computation_account,
+        ) {
+            Ok(ComputeAllocationOutput { field_0 }) => field_0,
+            Err(e) => {
+                msg!("MPC allocation verification failed: {}", e);
+                return Err(ErrorCode::AbortedComputation.into());
+            }
+        };
+
+        emit!(AllocationComputed {
+            allocation_ciphertext: result.ciphertexts[0],
+            nonce: result.nonce.to_le_bytes(),
+        });
+
+        Ok(())
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // STEP 5: Record Allocation (Authority records MPC result)
+    // ═══════════════════════════════════════════════════════════
+
+    /// After the MPC callback emits the allocation result and the authority
+    /// decrypts it off-chain, this instruction records the final allocation
+    /// for a specific bidder.
     pub fn record_allocation(ctx: Context<RecordAllocation>, amount: u64) -> Result<()> {
         let bid = &mut ctx.accounts.bid;
         let launch = &ctx.accounts.launch;
-        
+
         require!(!launch.is_finalized, ErrorCode::LaunchFinalized);
-        require!(ctx.accounts.authority.key() == launch.authority, ErrorCode::Unauthorized);
-        
+        require!(
+            ctx.accounts.authority.key() == launch.authority,
+            ErrorCode::Unauthorized
+        );
+
         bid.allocation = amount;
         bid.is_processed = true;
-        
+
         emit!(AllocationRecorded {
             bidder: bid.bidder,
             amount,
         });
-        
+
         Ok(())
     }
 
-    /// Finalize the launch (marks auction as complete, enables claiming)
+    // ═══════════════════════════════════════════════════════════
+    // STEP 6: Finalize Auction (Marks Complete, Enables Claims)
+    // ═══════════════════════════════════════════════════════════
+
     pub fn finalize_launch(ctx: Context<FinalizeLaunch>) -> Result<()> {
         let launch = &mut ctx.accounts.launch;
         require!(!launch.is_finalized, ErrorCode::LaunchFinalized);
-        require!(ctx.accounts.authority.key() == launch.authority, ErrorCode::Unauthorized);
-        
+        require!(
+            ctx.accounts.authority.key() == launch.authority,
+            ErrorCode::Unauthorized
+        );
+
         launch.is_finalized = true;
-        
+
         emit!(LaunchFinalized {
-            proof_hash: [0u8; 32], // Placeholder
+            total_bids: launch.bid_count,
         });
-        
+
         Ok(())
     }
 
-    /// Claim allocated tokens (called by users after finalization)
+    // ═══════════════════════════════════════════════════════════
+    // STEP 7: Claim Tokens (Non-Confidential, Post-Finalization)
+    // ═══════════════════════════════════════════════════════════
+
     pub fn claim_tokens(ctx: Context<ClaimTokens>) -> Result<()> {
         let bid = &mut ctx.accounts.bid;
         let launch = &mut ctx.accounts.launch;
-        
+
         require!(launch.is_finalized, ErrorCode::NotFinalized);
         require!(bid.allocation > 0, ErrorCode::NoAllocation);
         require!(!bid.is_claimed, ErrorCode::AlreadyClaimed);
-        
-        // Transfer tokens from launch_pool to user
+
+        // Transfer tokens from launch pool to user via PDA signer
         let seeds = &[b"launch_v3".as_ref(), &[launch.bump]];
         let signer = &[&seeds[..]];
-        
+
         anchor_spl::token_interface::transfer_checked(
             CpiContext::new_with_signer(
                 ctx.accounts.token_program.to_account_info(),
@@ -180,32 +261,36 @@ pub mod obsidian {
                     to: ctx.accounts.user_ata.to_account_info(),
                     authority: launch.to_account_info(),
                 },
-                signer
+                signer,
             ),
             bid.allocation,
             ctx.accounts.mint.decimals,
         )?;
-        
+
         bid.is_claimed = true;
         launch.tokens_distributed += bid.allocation;
-        
+
         emit!(TokensClaimed {
             bidder: bid.bidder,
             amount: bid.allocation,
         });
-        
+
         Ok(())
     }
 }
 
-// ... InitializeLaunch ... 
+// ═══════════════════════════════════════════════════════════════
+// ACCOUNT STRUCTS
+// ═══════════════════════════════════════════════════════════════
+
+// --- Initialize Launch (Non-Arcium) ---
 
 #[derive(Accounts)]
 pub struct InitializeLaunch<'info> {
     #[account(
         init,
         payer = authority,
-        space = 8 + 32 + 32 + 32 + 8 + 8 + 8 + 1 + 1, // Added space for 'bump'
+        space = 8 + Launch::SPACE,
         seeds = [b"launch_v3"],
         bump
     )]
@@ -231,70 +316,149 @@ pub struct InitializeLaunch<'info> {
     pub rent: Sysvar<'info, Rent>,
 }
 
+// --- Init Computation Definitions (Arcium One-Time Setup) ---
+
+#[init_comp_def_accounts("compute_winner", payer)]
 #[derive(Accounts)]
+pub struct InitWinnerCompDef<'info> {
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    #[account(
+        address = derive_mxe_pda!()
+    )]
+    pub mxe_account: Account<'info, MXEAccount>,
+
+    #[account(
+        init_if_needed,
+        space = 9,
+        payer = payer,
+        seeds = [&SIGN_PDA_SEED],
+        bump,
+        address = derive_sign_pda!(),
+    )]
+    pub sign_pda_account: Account<'info, ArciumSignerAccount>,
+
+    pub system_program: Program<'info, System>,
+    pub arcium_program: Program<'info, Arcium>,
+}
+
+#[init_comp_def_accounts("compute_allocation", payer)]
+#[derive(Accounts)]
+pub struct InitAllocationCompDef<'info> {
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    #[account(
+        address = derive_mxe_pda!()
+    )]
+    pub mxe_account: Account<'info, MXEAccount>,
+
+    #[account(
+        init_if_needed,
+        space = 9,
+        payer = payer,
+        seeds = [&SIGN_PDA_SEED],
+        bump,
+        address = derive_sign_pda!(),
+    )]
+    pub sign_pda_account: Account<'info, ArciumSignerAccount>,
+
+    pub system_program: Program<'info, System>,
+    pub arcium_program: Program<'info, Arcium>,
+}
+
+// --- Submit Encrypted Bid (Queues MPC Computation) ---
+
+#[queue_computation_accounts("compute_winner", bidder)]
+#[derive(Accounts)]
+#[instruction(computation_offset: u64)]
 pub struct SubmitBid<'info> {
     #[account(
         init,
         payer = bidder,
-        space = 8 + 32 + 4 + 200 + 1 + 8 + 1, // +8 for allocation, +1 for is_claimed
+        space = 8 + Bid::SPACE,
         seeds = [b"bid_v3", bidder.key().as_ref()],
         bump
     )]
     pub bid: Account<'info, Bid>,
-    
+
     #[account(mut)]
     pub launch: Account<'info, Launch>,
-    
-    #[account(
-        mut, 
-        constraint = from.mint == mint.key(),
-        constraint = from.owner == bidder.key()
-    )]
-    pub from: InterfaceAccount<'info, TokenAccount>,
-    
-    #[account(
-        mut, 
-        address = launch.launch_pool
-    )]
-    pub to: InterfaceAccount<'info, TokenAccount>,
-    
-    #[account(mint::token_program = token_program)]
-    pub mint: InterfaceAccount<'info, Mint>,
 
     #[account(mut)]
     pub bidder: Signer<'info>,
-    pub system_program: Program<'info, System>,
-    pub token_program: Interface<'info, TokenInterface>,
-}
 
-#[derive(Accounts)]
-pub struct RunAi<'info> {
-    #[account(mut)]
-    pub launch: Account<'info, Launch>,
-    pub authority: Signer<'info>,
-}
+    // --- Arcium-Required Accounts ---
 
-#[derive(Accounts)]
-pub struct Finalize<'info> {
+    #[account(
+        init_if_needed,
+        space = 9,
+        payer = bidder,
+        seeds = [&SIGN_PDA_SEED],
+        bump,
+        address = derive_sign_pda!(),
+    )]
+    pub sign_pda_account: Account<'info, ArciumSignerAccount>,
+
+    #[account(
+        address = derive_mxe_pda!()
+    )]
+    pub mxe_account: Account<'info, MXEAccount>,
+
     #[account(
         mut,
-        seeds = [b"launch_v3"],
-        bump = launch.bump
+        address = derive_mempool_pda!(mxe_account, ErrorCode::ClusterNotSet)
     )]
-    pub launch: Account<'info, Launch>,
-    
-    #[account(
-        mut, 
-        address = launch.launch_pool
-    )]
-    pub launch_pool: InterfaceAccount<'info, TokenAccount>,
-    
-    #[account(mint::token_program = token_program)]
-    pub mint: InterfaceAccount<'info, Mint>,
+    /// CHECK: mempool_account, checked by the arcium program.
+    pub mempool_account: UncheckedAccount<'info>,
 
-    pub authority: Signer<'info>,
-    pub token_program: Interface<'info, TokenInterface>,
+    #[account(
+        mut,
+        address = derive_execpool_pda!(mxe_account, ErrorCode::ClusterNotSet)
+    )]
+    /// CHECK: executing_pool, checked by the arcium program.
+    pub executing_pool: UncheckedAccount<'info>,
+
+    #[account(
+        mut,
+        address = derive_comp_pda!(computation_offset, mxe_account, ErrorCode::ClusterNotSet)
+    )]
+    /// CHECK: computation_account, checked by the arcium program.
+    pub computation_account: UncheckedAccount<'info>,
+
+    #[account(
+        address = derive_comp_def_pda!(COMP_DEF_OFFSET_COMPUTE_WINNER)
+    )]
+    pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
+
+    #[account(
+        mut,
+        address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet)
+    )]
+    pub cluster_account: Account<'info, Cluster>,
+
+    #[account(
+        mut,
+        address = ARCIUM_FEE_POOL_ACCOUNT_ADDRESS,
+    )]
+    pub pool_account: Account<'info, FeePool>,
+
+    #[account(
+        mut,
+        address = ARCIUM_CLOCK_ACCOUNT_ADDRESS
+    )]
+    pub clock_account: Account<'info, ClockAccount>,
+
+    pub system_program: Program<'info, System>,
+    pub arcium_program: Program<'info, Arcium>,
 }
+
+// --- MPC Callback Account Structs (Auto-Generated Patterns) ---
+// The #[arcium_callback] macro generates the required account struct
+// patterns. We define them here following the Arcium convention.
+
+// --- Record Allocation (Authority Only) ---
 
 #[derive(Accounts)]
 pub struct RecordAllocation<'info> {
@@ -304,15 +468,17 @@ pub struct RecordAllocation<'info> {
         bump
     )]
     pub bid: Account<'info, Bid>,
-    
+
     #[account(
         seeds = [b"launch_v3"],
         bump = launch.bump
     )]
     pub launch: Account<'info, Launch>,
-    
+
     pub authority: Signer<'info>,
 }
+
+// --- Finalize Launch ---
 
 #[derive(Accounts)]
 pub struct FinalizeLaunch<'info> {
@@ -322,9 +488,11 @@ pub struct FinalizeLaunch<'info> {
         bump = launch.bump
     )]
     pub launch: Account<'info, Launch>,
-    
+
     pub authority: Signer<'info>,
 }
+
+// --- Claim Tokens ---
 
 #[derive(Accounts)]
 pub struct ClaimTokens<'info> {
@@ -334,63 +502,89 @@ pub struct ClaimTokens<'info> {
         bump
     )]
     pub bid: Account<'info, Bid>,
-    
+
     #[account(
         mut,
         seeds = [b"launch_v3"],
         bump = launch.bump
     )]
     pub launch: Account<'info, Launch>,
-    
+
     #[account(
-        mut, 
+        mut,
         address = launch.launch_pool
     )]
     pub launch_pool: InterfaceAccount<'info, TokenAccount>,
-    
+
     #[account(mint::token_program = token_program)]
     pub mint: InterfaceAccount<'info, Mint>,
-    
+
     #[account(
         mut,
         constraint = user_ata.mint == mint.key(),
         constraint = user_ata.owner == user.key()
     )]
     pub user_ata: InterfaceAccount<'info, TokenAccount>,
-    
+
     pub user: Signer<'info>,
     pub token_program: Interface<'info, TokenInterface>,
 }
 
+// ═══════════════════════════════════════════════════════════════
+// DATA ACCOUNTS
+// ═══════════════════════════════════════════════════════════════
+
 #[account]
 pub struct Launch {
-    pub authority: Pubkey,
-    pub mint: Pubkey,
-    pub launch_pool: Pubkey,
-    pub total_tokens: u64,
-    pub max_allocation: u64,
-    pub tokens_distributed: u64,
-    pub is_finalized: bool,
-    pub bump: u8, // Store bump for signer
+    pub authority: Pubkey,       // 32
+    pub mint: Pubkey,            // 32
+    pub launch_pool: Pubkey,     // 32
+    pub total_tokens: u64,       // 8
+    pub max_allocation: u64,     // 8
+    pub tokens_distributed: u64, // 8
+    pub bid_count: u32,          // 4
+    pub is_finalized: bool,      // 1
+    pub winner: Pubkey,          // 32
+    pub winning_amount: u64,     // 8
+    pub bump: u8,                // 1
+}
+
+impl Launch {
+    pub const SPACE: usize = 32 + 32 + 32 + 8 + 8 + 8 + 4 + 1 + 32 + 8 + 1;
 }
 
 #[account]
 pub struct Bid {
+    pub bidder: Pubkey,     // 32
+    pub is_processed: bool, // 1
+    pub allocation: u64,    // 8
+    pub is_claimed: bool,   // 1
+}
+
+impl Bid {
+    pub const SPACE: usize = 32 + 1 + 8 + 1;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EVENTS
+// ═══════════════════════════════════════════════════════════════
+
+#[event]
+pub struct BidSubmitted {
     pub bidder: Pubkey,
-    pub encrypted_data: Vec<u8>,
-    pub is_processed: bool,
-    pub allocation: u64,    // Token amount won
-    pub is_claimed: bool,   // Whether tokens have been claimed
+    pub computation_offset: u64,
 }
 
 #[event]
-pub struct AiProcessingStarted {
-    pub timestamp: i64,
+pub struct WinnerComputed {
+    pub winning_ciphertext: [u8; 32],
+    pub nonce: [u8; 16],
 }
 
 #[event]
-pub struct LaunchFinalized {
-    pub proof_hash: [u8; 32],
+pub struct AllocationComputed {
+    pub allocation_ciphertext: [u8; 32],
+    pub nonce: [u8; 16],
 }
 
 #[event]
@@ -400,10 +594,19 @@ pub struct AllocationRecorded {
 }
 
 #[event]
+pub struct LaunchFinalized {
+    pub total_bids: u32,
+}
+
+#[event]
 pub struct TokensClaimed {
     pub bidder: Pubkey,
     pub amount: u64,
 }
+
+// ═══════════════════════════════════════════════════════════════
+// ERRORS
+// ═══════════════════════════════════════════════════════════════
 
 #[error_code]
 pub enum ErrorCode {
@@ -419,4 +622,8 @@ pub enum ErrorCode {
     NoAllocation,
     #[msg("Tokens have already been claimed.")]
     AlreadyClaimed,
+    #[msg("MPC computation was aborted or verification failed.")]
+    AbortedComputation,
+    #[msg("Cluster not set for this MXE.")]
+    ClusterNotSet,
 }

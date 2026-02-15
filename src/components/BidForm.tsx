@@ -5,23 +5,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, ArrowRight, Loader2, CheckCircle, Wallet } from 'lucide-react';
 import { useProgram } from '@/hooks/useProgram';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
+import { PublicKey, SystemProgram } from '@solana/web3.js';
 import * as spl from '@solana/spl-token';
 import { BN } from '@coral-xyz/anchor';
 import { toast } from 'sonner';
-import { arcium } from '@/lib/arcium';
-import { ARCIUM_CLUSTER_PUBKEY } from '@/utils/constants';
+import { encryptBid, deriveArciumAccounts, waitForComputation } from '@/lib/arcium';
+import { randomBytes } from 'crypto';
 
 export default function BidForm() {
-    const { program } = useProgram();
+    const { program, provider } = useProgram();
     const { publicKey } = useWallet();
 
     const [amount, setAmount] = useState('');
-    const [status, setStatus] = useState<'idle' | 'encrypting' | 'submitting' | 'success' | 'error'>('idle');
+    const [status, setStatus] = useState<'idle' | 'encrypting' | 'submitting' | 'computing' | 'success' | 'error'>('idle');
     const [errorMessage, setErrorMessage] = useState('');
     const [txHash, setTxHash] = useState('');
     const [isMobileOpen, setIsMobileOpen] = useState(false);
-
 
     const [launchState, setLaunchState] = useState<{
         authority: PublicKey;
@@ -39,7 +38,6 @@ export default function BidForm() {
         isProcessed?: boolean;
     } | null>(null);
 
-    // NEW: Persistent state for existing bid
     const [hasBid, setHasBid] = useState(false);
     const [isCheckingBid, setIsCheckingBid] = useState(false);
 
@@ -54,7 +52,7 @@ export default function BidForm() {
         setIsCheckingBid(true);
     }, [publicKey]);
 
-    // Initial Check for Existing Bid & Fetch Launch State
+    // Fetch Launch State & Check for Existing Bid
     useEffect(() => {
         if (!program || !publicKey) {
             setIsCheckingBid(false);
@@ -62,8 +60,6 @@ export default function BidForm() {
         }
 
         const init = async () => {
-            const DEMO_MODE = true; // Global Simulation Flag
-
             try {
                 // 1. Fetch Launch State
                 const [launchPda] = PublicKey.findProgramAddressSync(
@@ -76,24 +72,14 @@ export default function BidForm() {
                     launchAccount = await program.account.launch.fetchNullable(launchPda);
                 } catch (e: any) {
                     console.error("Account fetch failed:", e);
-                    setErrorMessage(`Launch Account Not Found (${process.env.NEXT_PUBLIC_NETWORK || 'local'}). Error: ${e.message}`);
+                    setErrorMessage(`Launch Account Not Found (${process.env.NEXT_PUBLIC_NETWORK || 'devnet'}). Error: ${e.message}`);
                 }
 
                 if (launchAccount) {
                     setLaunchState(launchAccount as any);
-                } else if (DEMO_MODE) {
-                    // MOCK Launch State for Demo
-                    console.log("Using MOCK Launch State");
-                    setLaunchState({
-                        authority: publicKey,
-                        mint: new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"), // Devnet USDC
-                        launchPool: new PublicKey("11111111111111111111111111111111"), // Mock
-                        totalTokens: new BN(1_000_000_000),
-                        isFinalized: false,
-                    } as any);
                 } else {
                     console.error("Launch Account is null (not found on-chain)");
-                    setErrorMessage(`Launch V3 Not Found on ${process.env.NEXT_PUBLIC_NETWORK || 'local'}. Ensure env is set to devnet.`);
+                    setErrorMessage(`Launch V3 Not Found on ${process.env.NEXT_PUBLIC_NETWORK || 'devnet'}. Deploy the program first.`);
                 }
 
                 // 2. Check for Existing Bid
@@ -103,7 +89,6 @@ export default function BidForm() {
                 );
                 const existingBid = await program.account.bid.fetchNullable(bidPda);
                 if (existingBid) {
-                    // ... existing logic ...
                     const bidAccount = existingBid as any;
                     setHasBid(true);
                     setBidData({
@@ -127,32 +112,33 @@ export default function BidForm() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!amount || !publicKey || !program || !launchState) return;
-        if (status === 'encrypting' || status === 'submitting') return;
+        if (!amount || !publicKey || !program || !launchState || !provider) return;
+        if (status === 'encrypting' || status === 'submitting' || status === 'computing') return;
         if (isSubmittingRef.current) return;
 
         isSubmittingRef.current = true;
 
         try {
             setErrorMessage('');
-            const DEMO_MODE = true; // Presentation Mode
 
-            // 1. Encryption (Real Arcium)
+            // ═══════════════════════════════════════════════════
+            // STEP 1: Encrypt bid using Arcium SDK
+            // ═══════════════════════════════════════════════════
             setStatus('encrypting');
-            // Simulate network delay for effect
-            await new Promise(r => setTimeout(r, 600));
 
-            // Encrypt data for the Cypher Node (Cluster)
-            // Format: "ENCRYPTED:<AMOUNT>"
-            const payloadString = `ENCRYPTED:${amount}`;
-            const encryptedUint8 = arcium.encrypt(payloadString, ARCIUM_CLUSTER_PUBKEY);
-            const encryptedPayload = Buffer.from(encryptedUint8);
+            const bidAmountBigInt = BigInt(Math.floor(parseFloat(amount) * 1_000_000));
 
-            const amountBN = new BN(parseFloat(amount) * 1_000_000);
+            const encrypted = await encryptBid(
+                bidAmountBigInt,
+                provider,
+                program.programId
+            );
 
+            // ═══════════════════════════════════════════════════
+            // STEP 2: Derive all accounts
+            // ═══════════════════════════════════════════════════
             setStatus('submitting');
 
-            // 2. Derive Accounts
             const [launchPda] = PublicKey.findProgramAddressSync(
                 [Buffer.from("launch_v3")],
                 program.programId
@@ -163,7 +149,7 @@ export default function BidForm() {
                 program.programId
             );
 
-            // Safety Check
+            // Safety check: bid already exists?
             const existingBid = await program.account.bid.fetchNullable(bidPda);
             if (existingBid) {
                 toast.success('Bid verified on-chain');
@@ -179,54 +165,63 @@ export default function BidForm() {
                 return;
             }
 
-            // User's ATA
-            const fromAta = await spl.getAssociatedTokenAddress(
-                launchState.mint,
-                publicKey,
-                false,
-                spl.TOKEN_PROGRAM_ID
+            // Generate random computation offset
+            const computationOffsetBytes = randomBytes(8);
+            const computationOffset = new BN(computationOffsetBytes, "hex");
+
+            // Derive Arcium accounts
+            const arciumAccounts = deriveArciumAccounts(
+                program.programId,
+                computationOffsetBytes,
+                "compute_winner"
             );
 
-            const toAta = launchState.launchPool;
+            // Convert nonce to BN (u128)
+            const nonceBN = new BN(
+                Buffer.from(encrypted.nonce).toString("hex"),
+                16
+            );
 
-            // Check if User has USDC Account
-            const fromAccountInfo = await program.provider.connection.getAccountInfo(fromAta);
-            if (!fromAccountInfo && !DEMO_MODE) {
-                toast.error("No USDC Account Found", {
-                    description: "You need USDC to place a bid. Please swap SOL for USDC in your wallet first."
-                });
-                isSubmittingRef.current = false;
-                setStatus('idle');
-                return;
-            }
-
-            // 3. Send Transaction
-            let tx = "Simulated_Tx_Hash_For_Demo_" + Math.random().toString(36).substring(7);
-
-            if (!DEMO_MODE) {
-                tx = await program.methods
-                    .submitEncryptedBid(encryptedPayload, amountBN)
-                    .accounts({
-                        bid: bidPda,
-                        launch: launchPda,
-                        from: fromAta,
-                        to: toAta,
-                        mint: launchState.mint,
-                        bidder: publicKey,
-                        systemProgram: SystemProgram.programId,
-                        tokenProgram: spl.TOKEN_PROGRAM_ID,
-                    })
-                    .rpc();
-            } else {
-                await new Promise(r => setTimeout(r, 2000)); // Simulate detailed RPC confirmation
-            }
+            // ═══════════════════════════════════════════════════
+            // STEP 3: Submit encrypted bid transaction
+            // ═══════════════════════════════════════════════════
+            const tx = await program.methods
+                .submitEncryptedBid(
+                    computationOffset,
+                    Array.from(encrypted.ciphertext),
+                    encrypted.publicKey,
+                    nonceBN,
+                )
+                .accounts({
+                    bid: bidPda,
+                    launch: launchPda,
+                    bidder: publicKey,
+                    ...arciumAccounts,
+                    systemProgram: SystemProgram.programId,
+                })
+                .rpc({ commitment: "confirmed" });
 
             console.log("Transaction Signature:", tx);
-            toast.success('Bid Encrypted & Submitted');
+            toast.success('Bid Encrypted & Submitted to Arcium');
+
+            // ═══════════════════════════════════════════════════
+            // STEP 4: Wait for MPC computation to finalize
+            // ═══════════════════════════════════════════════════
+            setStatus('computing');
+            toast.info('MPC computing...', { description: 'Arcium nodes are processing your bid confidentially.' });
+
+            const finalizeSig = await waitForComputation(
+                provider,
+                computationOffsetBytes,
+                program.programId
+            );
+
+            console.log("Computation finalized:", finalizeSig);
 
             setHasBid(true);
             setBidData({ txHash: tx, allocation: 0, isClaimed: false, isProcessed: false });
             setStatus('success');
+            toast.success('Bid processed by MPC!');
 
             if (window.innerWidth < 768) {
                 setTimeout(() => setIsMobileOpen(false), 2000);
@@ -235,7 +230,6 @@ export default function BidForm() {
         } catch (err: any) {
             console.error("Bid Submission Error:", err);
 
-            // Handle "already processed" / "simulation failed"
             const errMsg = err.message || "";
             if (errMsg.includes("already been processed") || errMsg.includes("already in use") || errMsg.includes("simulation failed")) {
                 try {
@@ -265,7 +259,7 @@ export default function BidForm() {
         }
     };
 
-    // Helper to Restore View
+    // View existing bid
     const handleViewBid = async () => {
         if (!program || !publicKey) return;
         const [bidPda] = PublicKey.findProgramAddressSync(
@@ -298,7 +292,7 @@ export default function BidForm() {
         );
     }
 
-    // Launch State Error (Prevent Infinite Loading)
+    // Launch State Error
     if (!launchState && !isCheckingBid && program && !bidData) {
         return (
             <div className="w-full max-w-sm mx-auto p-8 backdrop-blur-xl bg-red-500/10 rounded-xl border border-red-500/20 text-center">
@@ -317,17 +311,6 @@ export default function BidForm() {
 
     // Handle Claim
     const handleClaim = async () => {
-        const DEMO_MODE = false; // CHANGED: Enabled for Presentation/Demo
-
-        if (DEMO_MODE) {
-            setStatus('submitting');
-            await new Promise(r => setTimeout(r, 1500)); // Simulate tx
-            toast.success('Tokens Claimed! (Simulated)', { description: `Tx: 3xP4...Demo` });
-            setBidData(prev => prev ? { ...prev, isClaimed: true } : null);
-            setStatus('success');
-            return;
-        }
-
         if (!program || !publicKey || !launchState) return;
 
         try {
@@ -349,22 +332,19 @@ export default function BidForm() {
                 spl.TOKEN_PROGRAM_ID
             );
 
-            // Check if User ATA exists
+            // Check if User ATA exists, create if not
             try {
                 await spl.getAccount(program.provider.connection, userAta);
             } catch (e) {
-                // If not found, create it
                 console.log("Creating User ATA...");
-                const createAtaTx = new Transaction().add(
+                const createAtaTx = new (await import('@solana/web3.js')).Transaction().add(
                     spl.createAssociatedTokenAccountInstruction(
-                        publicKey, // payer
-                        userAta,   // ata
-                        publicKey, // owner
-                        launchState.mint // mint
+                        publicKey,
+                        userAta,
+                        publicKey,
+                        launchState.mint
                     )
                 );
-
-                // Send creation tx
                 const signature = await program.provider.sendAndConfirm(createAtaTx);
                 toast.success("Created Token Account");
             }
@@ -392,17 +372,17 @@ export default function BidForm() {
         }
     };
 
+    // ═══════════════════════════════════════════════════════════
     // DASHBOARD VIEW (If Bid Exists)
+    // ═══════════════════════════════════════════════════════════
     if (bidData) {
-        const DEMO_MODE = true;
-        const isAuctionFinalized = DEMO_MODE || launchState?.isFinalized || false;
-        const hasAllocation = DEMO_MODE || (bidData.allocation || 0) > 0;
+        const isAuctionFinalized = launchState?.isFinalized || false;
+        const hasAllocation = (bidData.allocation || 0) > 0;
         const canClaim = isAuctionFinalized && hasAllocation && !bidData.isClaimed;
-        const displayAllocation = bidData.allocation && bidData.allocation > 0 ? bidData.allocation : 50000;
+        const displayAllocation = bidData.allocation && bidData.allocation > 0 ? bidData.allocation : 0;
 
         return (
             <div className="w-full max-w-sm mx-auto p-1 relative z-10">
-                {/* Radial Glow Effect */}
                 <div className="absolute -inset-10 bg-accent-purple/20 blur-[100px] rounded-full pointer-events-none opacity-40"></div>
 
                 <div className="glass-panel rounded-2xl p-8 shadow-2xl text-center space-y-6 relative overflow-hidden">
@@ -431,7 +411,7 @@ export default function BidForm() {
                         <p className="text-sm font-mono text-purple-200/70 uppercase tracking-widest">
                             {isAuctionFinalized
                                 ? (bidData.isClaimed ? 'Claimed Successfully' : 'Auction Complete')
-                                : 'Auction In Progress'}
+                                : 'MPC Processing...'}
                         </p>
                     </div>
 
@@ -440,11 +420,11 @@ export default function BidForm() {
                         <div className="flex justify-between items-center text-sm">
                             <span className="text-purple-200/60 font-mono">Bid Amount</span>
                             <span className="text-accent-purple font-mono flex items-center gap-2 font-bold">
-                                <Lock className="w-3.5 h-3.5" /> Encrypted
+                                <Lock className="w-3.5 h-3.5" /> Encrypted (Arcium MPC)
                             </span>
                         </div>
 
-                        {(bidData.isProcessed || DEMO_MODE) && (
+                        {bidData.isProcessed && (
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-purple-200/60 font-mono">Allocation</span>
                                 <span className={`font-mono font-bold text-lg ${hasAllocation ? 'text-green-400' : 'text-purple-200/50'}`}>
@@ -452,6 +432,13 @@ export default function BidForm() {
                                 </span>
                             </div>
                         )}
+
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-purple-200/60 font-mono">Privacy</span>
+                            <span className="font-mono text-xs px-2.5 py-1 rounded-md font-bold tracking-wide bg-cyan-500/20 text-cyan-300">
+                                ARCIUM MPC
+                            </span>
+                        </div>
 
                         <div className="flex justify-between items-center text-sm">
                             <span className="text-purple-200/60 font-mono">Status</span>
@@ -483,7 +470,7 @@ export default function BidForm() {
 
                     {!isAuctionFinalized && (
                         <p className="text-xs text-purple-200/40 font-mono">
-                            ⏳ Allocation will be revealed when the auction ends
+                            ⏳ Arcium MPC is processing allocations confidentially
                         </p>
                     )}
 
@@ -502,7 +489,9 @@ export default function BidForm() {
         );
     }
 
+    // ═══════════════════════════════════════════════════════════
     // FORM VIEW
+    // ═══════════════════════════════════════════════════════════
     const formElements = (
         <>
             <h3 className="text-sm font-mono tracking-widest text-purple-200/60 mb-8 flex items-center justify-between uppercase">
@@ -518,7 +507,7 @@ export default function BidForm() {
                             value={hasBid ? '' : amount}
                             onChange={(e) => { setAmount(e.target.value); if (status === 'success') setStatus('idle'); }}
                             placeholder={hasBid ? "Bid Placed" : "0.00"}
-                            disabled={status === 'encrypting' || status === 'submitting' || hasBid}
+                            disabled={status === 'encrypting' || status === 'submitting' || status === 'computing' || hasBid}
                             className={`w-full bg-transparent border-b border-purple-200/10 py-5 px-2 text-5xl font-display text-white focus:outline-none focus:border-accent-purple/50 transition-all placeholder:text-purple-200/10 no-spinner tracking-tight ${hasBid ? 'opacity-50 cursor-not-allowed text-center placeholder:text-accent-purple/60' : ''}`}
                         />
                         {!hasBid && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-mono text-purple-200/30 tracking-widest pointer-events-none group-focus-within:text-accent-purple transition-colors">USDC</span>}
@@ -535,7 +524,7 @@ export default function BidForm() {
                 ) : (
                     <button
                         type="submit"
-                        disabled={status === 'encrypting' || status === 'submitting' || (!amount && !hasBid)}
+                        disabled={status === 'encrypting' || status === 'submitting' || status === 'computing' || (!amount && !hasBid)}
                         className={`w-full py-4 rounded-lg font-mono text-xs font-bold tracking-[0.2em] uppercase flex items-center justify-center gap-3 transition-all relative overflow-hidden shadow-lg
                         ${hasBid ? 'bg-accent-purple/15 text-accent-purple border border-accent-purple/30 hover:bg-accent-purple/25 hover:shadow-[0_0_20px_rgba(168,85,247,0.2)]' :
                                 status === 'success' ? 'bg-green-500/15 text-green-400 border border-green-500/30 hover:bg-green-500/25' :
@@ -557,19 +546,21 @@ export default function BidForm() {
                                 Retry <ArrowRight className="w-4 h-4" />
                             </>
                         ) : status === 'encrypting' ? (
-                            <span className="flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" /> Encrypting...</span>
+                            <span className="flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" /> Encrypting via Arcium...</span>
                         ) : status === 'submitting' ? (
-                            <span className="flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" /> Verifying...</span>
+                            <span className="flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" /> Submitting to MPC...</span>
+                        ) : status === 'computing' ? (
+                            <span className="flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" /> MPC Computing...</span>
                         ) : (
                             <span className="flex items-center gap-2"><CheckCircle className="w-3 h-3" /> Registered</span>
                         )}
 
                         <AnimatePresence>
-                            {(status === 'encrypting' || status === 'submitting') && (
+                            {(status === 'encrypting' || status === 'submitting' || status === 'computing') && (
                                 <motion.div
                                     initial={{ width: '0%' }}
                                     animate={{ width: '100%' }}
-                                    transition={{ duration: 3.5, ease: "linear" }}
+                                    transition={{ duration: status === 'computing' ? 10 : 3.5, ease: "linear" }}
                                     className="absolute bottom-0 left-0 h-0.5 bg-accent-purple box-shadow-[0_0_10px_#a855f7]"
                                 />
                             )}
@@ -595,7 +586,6 @@ export default function BidForm() {
     return (
         <>
             <div className="hidden md:block w-full max-w-sm mx-auto p-1 relative z-10">
-                {/* Desktop Glow Behind Card */}
                 <div className="absolute -inset-1 z-[-1] bg-gradient-to-b from-accent-purple/20 to-transparent blur-3xl opacity-30 rounded-full"></div>
 
                 <div className="glass-panel rounded-2xl p-10 relative overflow-hidden shadow-2xl border border-white/10">

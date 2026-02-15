@@ -1,118 +1,170 @@
 
 # Obsidian | The Dark Launchpad
 
-**Privacy-Preserving Token Launchpad on Solana powered by Arcium Confidential Computing.**
+**Privacy-Preserving Blind Auction on Solana powered by Arcium v0.7.0 Confidential Computing.**
 
 [![Solana Devnet](https://img.shields.io/badge/Solana-Devnet-9945FF?style=flat-square&logo=solana)](https://solana.com)
-[![Arcium Confidential Compute](https://img.shields.io/badge/Arcium-Confidential%20Compute-6AE3FF?style=flat-square)](https://arcium.com)
-[![Live Demo](https://img.shields.io/badge/Status-Live_Demo-00C853?style=flat-square)](https://obsidian-qdke.vercel.app/)
-
-**Live Application:** [https://obsidian-qdke.vercel.app/](https://obsidian-qdke.vercel.app/)
-
-**Presentation Video:** [https://youtu.be/SBUsO_uib0Q](https://youtu.be/SBUsO_uib0Q?si=0CsM-NCemgf2fTt2)
+[![Arcium v0.7.0](https://img.shields.io/badge/Arcium-v0.7.0-6AE3FF?style=flat-square)](https://arcium.com)
 
 ---
 
-## Executive Summary
+## Trust Model
 
-Obsidian addresses the critical issue of information leakage in decentralized finance auctions. By integrating Arcium's confidential computing layer with Solana's high-performance blockchain, Obsidian enables "Dark Auctions" where bid amounts remain encrypted until the auction concludes. This mechanism prevents front-running, eliminates price manipulation based on visible demand, and ensures equitable market participation.
+> **Obsidian integrates Arcium v0.7.0 to execute blind auction allocation logic via decentralized Multi-Party Computation (MPC). All bids are encrypted client-side using Arcium's x25519 + RescueCipher, never decrypted on-chain, and never visible to protocol operators. Only final auction results are committed to Solana. No single MPC node can learn individual bid values.**
 
-## Core Problem
+---
 
-Traditional on-chain launchpads suffer from transparency paradoxes:
-*   **Public Bid Visibility:** Large bids signal market sentiment, leading to reactionary bidding.
-*   **MEV & Front-running:** Sophisticated actors extract value from pending transactions.
-*   **Price Discovery Failures:** Visible order books allow for artificial price anchoring.
-*   **Inequitable Allocations:** Small participants are often systematically disadvantaged by whale observation.
-
-## The Solution
-
-Obsidian implements a privacy-first architecture using specific cryptographic primitives:
-
-1.  **Client-Side Encryption:** Bids are encrypted in the browser using the Cypher Node's public key (TweetNaCl asymmetric encryption).
-2.  **Confidential Processing:** Encrypted payloads are stored on-chain but remain readable only by the Arcium Multi-Party Computation (MPC) nodes.
-3.  **Verifiable Execution:** The Cypher Node decrypts bids within a Trusted Execution Environment (TEE), executes the allocation logic, and posts the results on-chain.
-4.  **Zero-Knowledge Principles:** Individual bid amounts are never revealed to the public or the protocol administrators.
-
-### Architecture Overview
+## How It Works
 
 ```mermaid
 sequenceDiagram
     participant User
     participant Frontend
     participant Solana
-    participant Arcium as Cypher Node (Arcium)
-    
+    participant Arcium as Arcium MPC Cluster
+
     User->>Frontend: Input Bid Amount
-    Frontend->>Frontend: Encrypt Payload (NaCl Box)
-    Frontend->>Solana: Submit Encrypted Transaction
-    
-    Note over Solana: Data Stored On-Chain (Opaque)
-    
-    Arcium->>Solana: Fetch Encrypted State
-    Arcium->>Arcium: Decrypt inside TEE/MPC context
-    Arcium->>Arcium: Execute AI Scoring & Allocation
-    Arcium->>Solana: Commit Allocation Results
-    
+    Frontend->>Frontend: Encrypt (x25519 + RescueCipher)
+    Frontend->>Solana: Submit Encrypted Bid (queue_computation)
+
+    Note over Solana: Encrypted data stored on-chain (opaque)
+
+    Solana->>Arcium: MPC cluster picks up computation
+    Arcium->>Arcium: Joint decryption + compute_winner
+    Arcium->>Solana: Callback with signed result
+
     User->>Solana: Claim SPL Tokens
     Solana->>User: Transfer Asset
 ```
 
-## Technical Stack
-
-### Blockchain Infrastructure
-*   **Solana:** Layer 1 blockchain for consensus and settlement.
-*   **Anchor Framework:** Rust-based smart contract development framework.
-*   **SPL Token Program:** Standardized token operations for assets and pools.
-
-### Confidentiality Layer
-*   **Arcium Network:** Decentralized confidential computing network.
-*   **TweetNaCl:** Cryptographic library for Curve25519-XSalsa20-Poly1305 encryption.
-*   **Cypher Node:** Custom TypeScript execution environment for off-chain verifiable compute.
-
-### Frontend Interface
-*   **Next.js 15:** React framework for server-side rendering and static generation.
-*   **TailwindCSS:** Utility-first CSS framework for design system implementation.
-*   **Solana Wallet Adapter:** Standard library for wallet connection and transaction signing.
-
-## System Components
-
-### Solana Program
-The core logic resides in `programs/obsidian/src/lib.rs`. It manages:
-*   **Launch State:** Initialization of token pools and auction parameters.
-*   **Bid Ledger:** Storage of encrypted user bids.
-*   **Allocation Registry:** Recording of final token distribution.
-
-### Cypher Node
-Located in `scripts/run-cypher-demo.ts`, this component acts as the bridge between on-chain state and confidential processing. Ideally run within a TEE, it handles:
-*   Decryption of user bids.
-*   Execution of the AI-driven allocation model.
-*   Signing of allocation transactions.
-
-## Deployment Information
-
-*   **Program ID:** `8nkjktP5dWDYCkwR3fJFSuQANB1vyw5g5LTHCrxnf3CE`
-*   **Network:** Solana Devnet
-*   **Frontend URL:** [https://obsidian-qdke.vercel.app/](https://obsidian-qdke.vercel.app/)
-*   **Demonstration Mode:** The live application is currently configured in **Simulation Mode** to facilitate immediate testing and hackathon review. This enables users to experience the full encrypted bidding and claiming flow without requiring Devnet SOL or waiting for block confirmations.
-
-
-## Security Model
-
-The security of Obsidian relies on a hybrid model:
-1.  **Transport Security:** Data is encrypted at the client level before transmission.
-2.  **Compute Security:** Decryption keys exist only within the Arcium node context.
-3.  **State Integrity:** Solana guarantees the immutability of the encrypted ledger and the final allocation record.
-
-## Roadmap
-
-*   [x] **Phase 1:** Encrypted bidding and on-chain storage.
-*   [x] **Phase 2:** Off-chain decryption and allocation recording.
-*   [x] **Phase 3:** User claim interface and SPL token integration.
-*   [ ] **Phase 4:** Full Arcium Network integration (Distributed Key Generation).
-*   [ ] **Phase 5:** Token-2022 confidential transfer extensions.
-*   [ ] **Phase 6:** DAO governance for parameter selection.
+**Key invariants:**
+- Arcium owns decryption authority, not the protocol
+- The Solana program defines WHAT to compute
+- Arcium executes HOW to compute confidentially
+- Frontend only encrypts + submits
+- No server, no single-node key holder, no off-chain callbacks
 
 ---
 
-*Developed for the Arcium x Solana Hackathon.*
+## Repository Structure
+
+```
+obsidian/
+├─ programs/
+│  └─ obsidian/
+│     ├─ src/lib.rs           # Solana + Arcium Anchor program
+│     └─ Cargo.toml
+├─ encrypted-ixs/
+│  ├─ src/lib.rs              # Arcis MPC computation logic
+│  └─ Cargo.toml
+├─ src/                       # Next.js frontend
+│  ├─ lib/arcium.ts           # Arcium SDK encryption client
+│  ├─ components/BidForm.tsx   # Encrypted bid UI
+│  └─ ...
+├─ tests/obsidian.ts          # Arcium integration tests
+├─ Anchor.toml
+├─ Arcium.toml
+└─ README.md
+```
+
+**Why this structure:**
+- `programs/*` → Solana + Arcium Anchor program (`#[arcium_program]`)
+- `encrypted-ixs/` → Confidential computation logic (Arcis MPC code)
+- `src/` → Browser encryption + UX (Next.js)
+
+---
+
+## Technical Stack
+
+### Blockchain Infrastructure
+- **Solana** — Layer 1 consensus and settlement
+- **Anchor 0.30.1** — Rust smart contract framework
+- **SPL Token / Token-2022** — Standardized token operations
+
+### Arcium Confidential Computing (v0.7.0)
+- **arcium-anchor** — Anchor integration (`#[arcium_program]`, `queue_computation`, `#[arcium_callback]`)
+- **arcium-macros** — `comp_def_offset` and callback macros
+- **arcium-client** — On-chain account derivation and transaction building
+- **arcis** — MPC circuit DSL (`#[encrypted]`, `#[instruction]`, `Enc<Mxe, T>`)
+- **@arcium-hq/client** — TypeScript SDK for x25519, RescueCipher, computation tracking
+
+### Frontend
+- **Next.js 16** — React framework
+- **TailwindCSS** — Design system
+- **@noble/curves** — x25519 key exchange
+- **Solana Wallet Adapter** — Wallet connection
+
+---
+
+## Confidential Computation Flow
+
+### 1. Computation Definition Init (One-Time)
+```
+init_winner_comp_def() → init_comp_def() → registers compute_winner with Arcium
+```
+
+### 2. Encrypted Bid Submission
+```
+Client: x25519 ECDH → RescueCipher.encrypt(bid_amount)
+Solana: ArgBuilder → queue_computation() → Arcium mempool
+```
+
+### 3. MPC Execution (Automatic)
+```
+MPC Cluster: joint decrypt → execute compute_winner → signed result
+```
+
+### 4. Callback + Claim
+```
+#[arcium_callback] → emit WinnerComputed event
+User: claim_tokens() → SPL transfer from launch pool
+```
+
+---
+
+## Encrypted Instructions (Arcis)
+
+The confidential logic in `encrypted-ixs/src/lib.rs`:
+
+| Instruction | Input | Output | Purpose |
+|---|---|---|---|
+| `compute_winner` | `Enc<Mxe, BidInput>` × 2 | `Enc<Mxe, u64>` | Pairwise bid comparison |
+| `compute_allocation` | `Enc<Mxe, BidInput>` + `Enc<Mxe, PoolInfo>` | `Enc<Mxe, u64>` | Proportional token allocation |
+
+All inputs use `Enc<Mxe, T>` — only the MXE can decrypt. Individual bidders never see each other's bids.
+
+---
+
+## Deployment
+
+- **Program ID:** `8nkjktP5dWDYCkwR3fJFSuQANB1vyw5g5LTHCrxnf3CE`
+- **Network:** Solana Devnet
+- **Build:** `arcium build` (requires Arcium CLI via `arcup`)
+- **Test:** `arcium test --cluster devnet`
+- **Deploy:** `anchor deploy --provider.cluster devnet`
+
+---
+
+## Security Model
+
+1. **Client-Side Encryption:** Bids encrypted with x25519 + RescueCipher before leaving the browser
+2. **MPC Execution:** No single node can decrypt — joint computation across the Arcium MPC cluster
+3. **On-Chain Verification:** Callback results are signed by the cluster and verified on-chain
+4. **State Integrity:** Solana guarantees immutability of the encrypted ledger and final allocation record
+
+---
+
+## Checklist
+
+- [x] Arcium v0.7.0 everywhere
+- [x] `#[arcium_program]` macro
+- [x] `queue_computation` / `init_comp_def` / `#[arcium_callback]`
+- [x] Encrypted logic in `encrypted-ixs/` (Arcis)
+- [x] Frontend encrypts with `@arcium-hq/client` SDK
+- [x] MPC computes allocation (no server, no single-node keys)
+- [x] No `callback_url` — fully on-chain
+- [x] README explains trust model
+
+---
+
+*Developed for the Arcium × Solana Hackathon.*

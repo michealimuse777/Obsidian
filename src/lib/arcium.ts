@@ -1,74 +1,124 @@
-import nacl from 'tweetnacl';
-import { encodeBase64, decodeBase64 } from 'tweetnacl-util';
-
 /**
- * simulated-arcium-sdk
- * 
- * This mimics the interface of the Arcium Confidential Computing SDK.
- * In a production environment, this would establish a secure channel with the Arcium Network (MXE).
- * For this implementation, we use standard Curve25519 encryption (nacl.box) to simulate 
- * encrypting data for a specific Enclave/Cypher Node.
+ * Arcium SDK Integration — Obsidian
+ *
+ * Real Arcium v0.7.0 encryption using x25519 key exchange and RescueCipher.
+ * Replaces the previous NaCl simulation.
+ *
+ * Flow:
+ *   1. Generate ephemeral x25519 keypair
+ *   2. Fetch MXE's x25519 public key from on-chain
+ *   3. Derive shared secret via ECDH
+ *   4. Encrypt bid amount using RescueCipher
+ *   5. Return ciphertext + pubkey + nonce for on-chain submission
  */
 
-// Ephemeral keypair for the client (browser) for this session
-// In reality, this might be derived from the wallet or a session key
-const clientKeypair = nacl.box.keyPair();
+import { x25519 } from "@noble/curves/ed25519";
+import {
+    RescueCipher,
+    getMXEPublicKeyWithRetry,
+    getArciumEnv,
+    getCompDefAccAddress,
+    getCompDefAccOffset,
+    getComputationAccAddress,
+    getClusterAccAddress,
+    getMXEAccAddress,
+    getMempoolAccAddress,
+    getExecutingPoolAccAddress,
+    awaitComputationFinalization,
+} from "@arcium-hq/client";
+import type { AnchorProvider } from "@coral-xyz/anchor";
+import { PublicKey } from "@solana/web3.js";
 
-export const arcium = {
-    /**
-     * Encrypts a message for the Arcium Confidential Cluster.
-     * @param data The plaintext data (e.g., "5000" or JSON)
-     * @param clusterPublicKeyBase64 The Public Key of the Cypher Node/Cluster
-     * @returns The encrypted ciphertext as a Uint8Array
-     */
-    encrypt: (data: string, clusterPublicKeyBase64: string): Uint8Array => {
-        const nonce = nacl.randomBytes(nacl.box.nonceLength);
-        const messageUint8 = new TextEncoder().encode(data);
-        const receiverPublicKey = decodeBase64(clusterPublicKeyBase64);
+/**
+ * Encrypts a bid amount for submission to the Arcium MPC network.
+ *
+ * @param amount - Bid amount as BigInt (in token base units)
+ * @param provider - Anchor provider with RPC connection
+ * @param programId - Obsidian program public key
+ * @returns Encrypted bid data ready for on-chain submission
+ */
+export async function encryptBid(
+    amount: bigint,
+    provider: AnchorProvider,
+    programId: PublicKey
+) {
+    // Generate ephemeral x25519 keypair for this bid
+    const privateKey = x25519.utils.randomSecretKey();
+    const publicKey = x25519.getPublicKey(privateKey);
 
-        const encrypted = nacl.box(
-            messageUint8,
-            nonce,
-            receiverPublicKey,
-            clientKeypair.secretKey
-        );
+    // Fetch the MXE's x25519 public key from on-chain
+    const mxePublicKey = await getMXEPublicKeyWithRetry(provider, programId);
 
-        // Pack nonce + ephemeralPubKey + ciphertext
-        // This allows the receiver to reconstruct and decrypt
-        // Format: [Nonce (24)] [ClientPubKey (32)] [Ciphertext (...)]
-        const fullPayload = new Uint8Array(nonce.length + clientKeypair.publicKey.length + encrypted.length);
-        fullPayload.set(nonce);
-        fullPayload.set(clientKeypair.publicKey, nonce.length);
-        fullPayload.set(encrypted, nonce.length + clientKeypair.publicKey.length);
+    // Derive shared secret via ECDH
+    const sharedSecret = x25519.getSharedSecret(privateKey, mxePublicKey);
 
-        return fullPayload;
-    },
+    // Initialize RescueCipher with the shared secret
+    const cipher = new RescueCipher(sharedSecret);
 
-    /**
-     * Decrypts a message from the client.
-     * intended for use by the Cypher Node (Backend), not the frontend.
-     */
-    decrypt: (
-        fullPayload: Uint8Array,
-        nodeSecretKey: Uint8Array
-    ): string | null => {
-        try {
-            const nonce = fullPayload.slice(0, nacl.box.nonceLength);
-            const clientPublicKey = fullPayload.slice(nacl.box.nonceLength, nacl.box.nonceLength + nacl.box.publicKeyLength);
-            const ciphertext = fullPayload.slice(nacl.box.nonceLength + nacl.box.publicKeyLength);
+    // Generate random nonce (16 bytes)
+    const nonce = new Uint8Array(16);
+    crypto.getRandomValues(nonce);
 
-            const decrypted = nacl.box.open(
-                ciphertext,
-                nonce,
-                clientPublicKey,
-                nodeSecretKey
-            );
+    // Encrypt the bid amount
+    const ciphertext = cipher.encrypt([amount], nonce);
 
-            if (!decrypted) return null;
-            return new TextDecoder().decode(decrypted);
-        } catch (e) {
-            console.error("Decryption failed:", e);
-            return null;
-        }
-    }
-};
+    return {
+        ciphertext: ciphertext[0],
+        publicKey: Array.from(publicKey) as number[],
+        nonce,
+        cipher, // Keep cipher for decrypting results later
+        privateKey, // Keep for result decryption
+    };
+}
+
+/**
+ * Derives all Arcium-required account addresses for a computation.
+ *
+ * @param programId - Obsidian program ID
+ * @param computationOffset - Random offset for this computation
+ * @param compDefName - Name of the encrypted instruction (e.g., "compute_winner")
+ * @returns Object with all derived account addresses
+ */
+export function deriveArciumAccounts(
+    programId: PublicKey,
+    computationOffset: Buffer,
+    compDefName: string
+) {
+    const arciumEnv = getArciumEnv();
+
+    return {
+        computationAccount: getComputationAccAddress(
+            arciumEnv.arciumClusterOffset,
+            computationOffset
+        ),
+        clusterAccount: getClusterAccAddress(arciumEnv.arciumClusterOffset),
+        mxeAccount: getMXEAccAddress(programId),
+        mempoolAccount: getMempoolAccAddress(arciumEnv.arciumClusterOffset),
+        executingPool: getExecutingPoolAccAddress(arciumEnv.arciumClusterOffset),
+        compDefAccount: getCompDefAccAddress(
+            programId,
+            Buffer.from(getCompDefAccOffset(compDefName)).readUInt32LE()
+        ),
+    };
+}
+
+/**
+ * Waits for an Arcium MPC computation to finalize on-chain.
+ *
+ * @param provider - Anchor provider
+ * @param computationOffset - The computation offset used during submission
+ * @param programId - Obsidian program ID
+ * @returns Finalization transaction signature
+ */
+export async function waitForComputation(
+    provider: AnchorProvider,
+    computationOffset: Buffer,
+    programId: PublicKey
+): Promise<string> {
+    return await awaitComputationFinalization(
+        provider,
+        computationOffset,
+        programId,
+        "confirmed"
+    );
+}
