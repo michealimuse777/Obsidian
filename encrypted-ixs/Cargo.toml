@@ -1,8 +1,8 @@
 [package]
-name = "obsidian-encrypted-ixs"
+name = "encrypted-ixs"
 version = "0.1.0"
 edition = "2021"
 description = "Arcium confidential computation definitions for Obsidian blind auction"
 
 [dependencies]
-arcis = "0.7"
+arcis = "0.8"

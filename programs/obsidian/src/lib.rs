@@ -44,14 +44,12 @@ pub mod obsidian_auction {
     // ═══════════════════════════════════════════════════════════
 
     /// Registers the `compute_winner` encrypted instruction with Arcium.
-    /// Must be called once before any bids can be processed.
     pub fn init_winner_comp_def(ctx: Context<InitWinnerCompDef>) -> Result<()> {
         init_comp_def(ctx.accounts, None, None)?;
         Ok(())
     }
 
     /// Registers the `compute_allocation` encrypted instruction with Arcium.
-    /// Must be called once before allocations can be computed.
     pub fn init_allocation_comp_def(ctx: Context<InitAllocationCompDef>) -> Result<()> {
         init_comp_def(ctx.accounts, None, None)?;
         Ok(())
@@ -61,54 +59,26 @@ pub mod obsidian_auction {
     // STEP 3: Submit Encrypted Bid (Queues MPC Computation)
     // ═══════════════════════════════════════════════════════════
 
-    /// Accepts an encrypted bid and queues it for MPC processing.
-    ///
-    /// The bid amount is encrypted client-side using the MXE's x25519 public key
-    /// and the RescueCipher. The Solana program never sees plaintext.
-    ///
-    /// Flow:
-    ///   1. Client encrypts bid with MXE pubkey
-    ///   2. This instruction stores encrypted data on-chain
-    ///   3. `queue_computation` submits to Arcium's on-chain mempool
-    ///   4. MPC cluster picks up, decrypts jointly, executes `compute_winner`
-    ///   5. Result returned via `compute_winner_callback`
     pub fn submit_encrypted_bid(
         ctx: Context<SubmitBid>,
         computation_offset: u64,
         encrypted_amount: [u8; 32],
-        pub_key: [u8; 32],
         nonce: u128,
     ) -> Result<()> {
-        let launch = &mut ctx.accounts.launch;
-        require!(!launch.is_finalized, ErrorCode::LaunchFinalized);
+        // Check finalization first
+        require!(!ctx.accounts.launch.is_finalized, ErrorCode::LaunchFinalized);
 
-        // Store bid metadata (non-confidential fields only)
-        let bid = &mut ctx.accounts.bid;
-        bid.bidder = ctx.accounts.bidder.key();
-        bid.is_processed = false;
-        bid.allocation = 0;
-        bid.is_claimed = false;
-
-        // Increment bid counter
-        launch.bid_count += 1;
+        // Save bidder key before any borrows
+        let bidder_key = ctx.accounts.bidder.key();
 
         // Build encrypted arguments for the MPC computation
-        // The ArgBuilder matches the Arcis `compute_winner` signature:
-        //   bid_a: Enc<Mxe, BidInput { amount: u64 }>
-        // For Mxe-encrypted inputs, we omit x25519_pubkey and use plaintext nonce
         let args = ArgBuilder::new()
             .plaintext_u128(nonce)
             .encrypted_u64(encrypted_amount)
             .build();
 
-        // Set the sign PDA bump for Arcium CPI
         ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
 
-        // Queue the computation for MPC execution
-        // The MPC cluster will:
-        //   1. Decrypt the bid inside MPC
-        //   2. Execute the compute_winner logic
-        //   3. Return result via callback
         queue_computation(
             ctx.accounts,
             computation_offset,
@@ -116,14 +86,24 @@ pub mod obsidian_auction {
             vec![ComputeWinnerCallback::callback_ix(
                 computation_offset,
                 &ctx.accounts.mxe_account,
-                &[], // No additional custom accounts
+                &[],
             )?],
-            1, // Number of callback transactions
-            0, // Priority fee (0 = no priority)
+            1,
+            0,
         )?;
 
+        // Now mutably borrow after queue_computation is done
+        let bid = &mut ctx.accounts.bid;
+        bid.bidder = bidder_key;
+        bid.is_processed = false;
+        bid.allocation = 0;
+        bid.is_claimed = false;
+
+        let launch = &mut ctx.accounts.launch;
+        launch.bid_count += 1;
+
         emit!(BidSubmitted {
-            bidder: bid.bidder,
+            bidder: bidder_key,
             computation_offset,
         });
 
@@ -131,13 +111,9 @@ pub mod obsidian_auction {
     }
 
     // ═══════════════════════════════════════════════════════════
-    // STEP 4: MPC Result Callback (Called by Arcium Network)
+    // STEP 4: MPC Result Callbacks (Called by Arcium Network)
     // ═══════════════════════════════════════════════════════════
 
-    /// Called automatically by the MPC cluster when `compute_winner` finishes.
-    ///
-    /// The output contains the encrypted winning bid amount.
-    /// We verify the MPC cluster's signature and record the result.
     #[arcium_callback(encrypted_ix = "compute_winner")]
     pub fn compute_winner_callback(
         ctx: Context<ComputeWinnerCallback>,
@@ -162,7 +138,6 @@ pub mod obsidian_auction {
         Ok(())
     }
 
-    /// Called automatically by the MPC cluster when `compute_allocation` finishes.
     #[arcium_callback(encrypted_ix = "compute_allocation")]
     pub fn compute_allocation_callback(
         ctx: Context<ComputeAllocationCallback>,
@@ -191,9 +166,6 @@ pub mod obsidian_auction {
     // STEP 5: Record Allocation (Authority records MPC result)
     // ═══════════════════════════════════════════════════════════
 
-    /// After the MPC callback emits the allocation result and the authority
-    /// decrypts it off-chain, this instruction records the final allocation
-    /// for a specific bidder.
     pub fn record_allocation(ctx: Context<RecordAllocation>, amount: u64) -> Result<()> {
         let bid = &mut ctx.accounts.bid;
         let launch = &ctx.accounts.launch;
@@ -216,7 +188,7 @@ pub mod obsidian_auction {
     }
 
     // ═══════════════════════════════════════════════════════════
-    // STEP 6: Finalize Auction (Marks Complete, Enables Claims)
+    // STEP 6: Finalize Auction
     // ═══════════════════════════════════════════════════════════
 
     pub fn finalize_launch(ctx: Context<FinalizeLaunch>) -> Result<()> {
@@ -248,7 +220,6 @@ pub mod obsidian_auction {
         require!(bid.allocation > 0, ErrorCode::NoAllocation);
         require!(!bid.is_claimed, ErrorCode::AlreadyClaimed);
 
-        // Transfer tokens from launch pool to user via PDA signer
         let seeds = &[b"launch_v3".as_ref(), &[launch.bump]];
         let signer = &[&seeds[..]];
 
@@ -317,58 +288,66 @@ pub struct InitializeLaunch<'info> {
 }
 
 // --- Init Computation Definitions (Arcium One-Time Setup) ---
+// Pattern from: https://docs.arcium.com/developers/program/computation-def-accs
 
-#[init_comp_def_accounts("compute_winner", payer)]
+#[init_computation_definition_accounts("compute_winner", payer)]
 #[derive(Accounts)]
 pub struct InitWinnerCompDef<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
     #[account(
+        mut,
         address = derive_mxe_pda!()
     )]
-    pub mxe_account: Account<'info, MXEAccount>,
+    pub mxe_account: Box<Account<'info, MXEAccount>>,
 
-    #[account(
-        init_if_needed,
-        space = 9,
-        payer = payer,
-        seeds = [&SIGN_PDA_SEED],
-        bump,
-        address = derive_sign_pda!(),
-    )]
-    pub sign_pda_account: Account<'info, ArciumSignerAccount>,
+    #[account(mut)]
+    /// CHECK: comp_def_account, checked by arcium program.
+    pub comp_def_account: UncheckedAccount<'info>,
 
-    pub system_program: Program<'info, System>,
+    #[account(mut, address = derive_mxe_lut_pda!(mxe_account.lut_offset_slot))]
+    /// CHECK: address_lookup_table, checked by arcium program.
+    pub address_lookup_table: UncheckedAccount<'info>,
+
+    #[account(address = LUT_PROGRAM_ID)]
+    /// CHECK: lut_program is the Address Lookup Table program.
+    pub lut_program: UncheckedAccount<'info>,
+
     pub arcium_program: Program<'info, Arcium>,
+    pub system_program: Program<'info, System>,
 }
 
-#[init_comp_def_accounts("compute_allocation", payer)]
+#[init_computation_definition_accounts("compute_allocation", payer)]
 #[derive(Accounts)]
 pub struct InitAllocationCompDef<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
     #[account(
+        mut,
         address = derive_mxe_pda!()
     )]
-    pub mxe_account: Account<'info, MXEAccount>,
+    pub mxe_account: Box<Account<'info, MXEAccount>>,
 
-    #[account(
-        init_if_needed,
-        space = 9,
-        payer = payer,
-        seeds = [&SIGN_PDA_SEED],
-        bump,
-        address = derive_sign_pda!(),
-    )]
-    pub sign_pda_account: Account<'info, ArciumSignerAccount>,
+    #[account(mut)]
+    /// CHECK: comp_def_account, checked by arcium program.
+    pub comp_def_account: UncheckedAccount<'info>,
 
-    pub system_program: Program<'info, System>,
+    #[account(mut, address = derive_mxe_lut_pda!(mxe_account.lut_offset_slot))]
+    /// CHECK: address_lookup_table, checked by arcium program.
+    pub address_lookup_table: UncheckedAccount<'info>,
+
+    #[account(address = LUT_PROGRAM_ID)]
+    /// CHECK: lut_program is the Address Lookup Table program.
+    pub lut_program: UncheckedAccount<'info>,
+
     pub arcium_program: Program<'info, Arcium>,
+    pub system_program: Program<'info, System>,
 }
 
 // --- Submit Encrypted Bid (Queues MPC Computation) ---
+// Pattern from: https://docs.arcium.com/developers/program
 
 #[queue_computation_accounts("compute_winner", bidder)]
 #[derive(Accounts)]
@@ -454,9 +433,64 @@ pub struct SubmitBid<'info> {
     pub arcium_program: Program<'info, Arcium>,
 }
 
-// --- MPC Callback Account Structs (Auto-Generated Patterns) ---
-// The #[arcium_callback] macro generates the required account struct
-// patterns. We define them here following the Arcium convention.
+// --- MPC Callback Account Structs ---
+// Pattern from: https://docs.arcium.com/developers/program/callback-accs
+
+#[callback_accounts("compute_winner")]
+#[derive(Accounts)]
+pub struct ComputeWinnerCallback<'info> {
+    pub arcium_program: Program<'info, Arcium>,
+
+    #[account(
+        address = derive_comp_def_pda!(COMP_DEF_OFFSET_COMPUTE_WINNER)
+    )]
+    pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
+
+    #[account(
+        address = derive_mxe_pda!()
+    )]
+    pub mxe_account: Account<'info, MXEAccount>,
+
+    /// CHECK: computation_account, checked by arcium program via constraints in the callback context.
+    pub computation_account: UncheckedAccount<'info>,
+
+    #[account(
+        address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet)
+    )]
+    pub cluster_account: Account<'info, Cluster>,
+
+    #[account(address = ::anchor_lang::solana_program::sysvar::instructions::ID)]
+    /// CHECK: instructions_sysvar, checked by the account constraint
+    pub instructions_sysvar: AccountInfo<'info>,
+}
+
+#[callback_accounts("compute_allocation")]
+#[derive(Accounts)]
+pub struct ComputeAllocationCallback<'info> {
+    pub arcium_program: Program<'info, Arcium>,
+
+    #[account(
+        address = derive_comp_def_pda!(COMP_DEF_OFFSET_COMPUTE_ALLOCATION)
+    )]
+    pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
+
+    #[account(
+        address = derive_mxe_pda!()
+    )]
+    pub mxe_account: Account<'info, MXEAccount>,
+
+    /// CHECK: computation_account, checked by arcium program via constraints in the callback context.
+    pub computation_account: UncheckedAccount<'info>,
+
+    #[account(
+        address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet)
+    )]
+    pub cluster_account: Account<'info, Cluster>,
+
+    #[account(address = ::anchor_lang::solana_program::sysvar::instructions::ID)]
+    /// CHECK: instructions_sysvar, checked by the account constraint
+    pub instructions_sysvar: AccountInfo<'info>,
+}
 
 // --- Record Allocation (Authority Only) ---
 

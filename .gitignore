@@ -18,3 +18,12 @@ id.json
 # OS
 .DS_Store
 Thumbs.db
+
+# Build artifacts & temp files
+build/
+artifacts/
+Cargo.lock
+build_errors*.txt
+arcium_build_log.txt
+arcium_stderr.txt
+arcium_install.sh
