@@ -1,14 +1,11 @@
 [project]
 name = "obsidian"
 
-[encrypted-ixs]
+[encrypted_ixs]
 path = "encrypted-ixs"
 
 [cluster]
-# Arcium testnet/devnet cluster offset
-# Update this value based on your assigned cluster
-offset = 0
+offset = 456
 
 [program]
-# Obsidian Solana program ID
 id = "8nkjktP5dWDYCkwR3fJFSuQANB1vyw5g5LTHCrxnf3CE"

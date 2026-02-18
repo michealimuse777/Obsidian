@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { Obsidian } from "../target/types/obsidian";
+import { ObsidianAuction } from "../target/types/obsidian_auction";
 import { assert, expect } from "chai";
 import {
     getArciumEnv,
@@ -20,7 +20,7 @@ import { randomBytes } from "crypto";
 import * as os from "os";
 
 /**
- * Obsidian Blind Auction — Arcium v0.7.0 Integration Tests
+ * Obsidian Blind Auction — Arcium v0.8.4 Integration Tests
  *
  * These tests validate the full Arcium computation lifecycle:
  *   1. Init computation definitions
@@ -31,7 +31,7 @@ import * as os from "os";
  */
 describe("obsidian-auction", () => {
     anchor.setProvider(anchor.AnchorProvider.env());
-    const program = anchor.workspace.Obsidian as Program<Obsidian>;
+    const program = anchor.workspace.ObsidianAuction as Program<ObsidianAuction>;
     const provider = anchor.getProvider() as anchor.AnchorProvider;
     const arciumEnv = getArciumEnv();
 

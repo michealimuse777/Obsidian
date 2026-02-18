@@ -12,6 +12,9 @@
     "init-devnet": "ts-node scripts/initialize-devnet.ts"
   },
   "dependencies": {
+    "@arcium-hq/client": "^0.8.4",
+    "@arcium-hq/reader": "^0.8.4",
+    "@noble/curves": "^1.8.0",
     "@remotion/player": "^4.0.414",
     "@solana/codecs": "^2.0.0",
     "@solana/spl-token": "^0.4.14",
@@ -27,9 +30,6 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "remotion": "^4.0.414",
-    "@arcium-hq/client": "^0.7.0",
-    "@arcium-hq/reader": "^0.7.0",
-    "@noble/curves": "^1.8.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0"
   },
