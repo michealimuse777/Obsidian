@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { ObsidianAuction } from "../target/types/obsidian_auction";
+import { ObsidianAuction } from "../target/types/obsidian_auction.ts";
 import { assert, expect } from "chai";
 import {
     getArciumEnv,
@@ -11,11 +11,11 @@ import {
     getMXEAccAddress,
     getMempoolAccAddress,
     getExecutingPoolAccAddress,
-    getMXEPublicKeyWithRetry,
+    getMXEPublicKey,
     RescueCipher,
     awaitComputationFinalization,
+    x25519,
 } from "@arcium-hq/client";
-import { x25519 } from "@noble/curves/ed25519";
 import { randomBytes } from "crypto";
 import * as os from "os";
 
@@ -23,7 +23,7 @@ import * as os from "os";
  * Obsidian Blind Auction — Arcium v0.8.4 Integration Tests
  *
  * These tests validate the full Arcium computation lifecycle:
- *   1. Init computation definitions
+ *   1. Init computation definitions (skip if already done)
  *   2. Encrypt bid client-side
  *   3. Submit encrypted bid → queues MPC computation
  *   4. Wait for MPC finalization
@@ -42,13 +42,24 @@ describe("obsidian-auction", () => {
         return anchor.web3.Keypair.fromSecretKey(Uint8Array.from(raw));
     }
 
-    it("Initializes computation definitions", async () => {
+    it("Initializes computation definitions (skip if already done)", async () => {
         const owner = readKpJson(`${os.homedir()}/.config/solana/id.json`);
+        const winnerCompDef = getCompDefAccAddress(
+            program.programId,
+            Buffer.from(getCompDefAccOffset("compute_winner")).readUInt32LE()
+        );
+
+        // Check if already initialized
+        const existing = await provider.connection.getAccountInfo(winnerCompDef);
+        if (existing) {
+            console.log("  ⚠️  Comp defs already initialized, skipping.");
+            return;
+        }
 
         console.log("Initializing compute_winner computation definition...");
         const initWinnerSig = await program.methods
             .initWinnerCompDef()
-            .accounts({
+            .accountsPartial({
                 payer: owner.publicKey,
                 mxeAccount: getMXEAccAddress(program.programId),
             })
@@ -59,7 +70,7 @@ describe("obsidian-auction", () => {
         console.log("Initializing compute_allocation computation definition...");
         const initAllocSig = await program.methods
             .initAllocationCompDef()
-            .accounts({
+            .accountsPartial({
                 payer: owner.publicKey,
                 mxeAccount: getMXEAccAddress(program.programId),
             })
@@ -76,10 +87,11 @@ describe("obsidian-auction", () => {
         const publicKey = x25519.getPublicKey(privateKey);
 
         // Fetch MXE x25519 public key
-        const mxePublicKey = await getMXEPublicKeyWithRetry(
+        const mxePublicKey = await getMXEPublicKey(
             provider,
             program.programId
         );
+        if (!mxePublicKey) throw new Error("MXE public key not found");
         console.log("MXE x25519 pubkey:", Buffer.from(mxePublicKey).toString("hex"));
 
         // Derive shared secret and create cipher
@@ -113,7 +125,6 @@ describe("obsidian-auction", () => {
             .submitEncryptedBid(
                 computationOffset,
                 Array.from(ciphertext[0]),
-                Array.from(publicKey),
                 new anchor.BN(
                     Buffer.from(nonce).toString("hex"),
                     16
@@ -125,7 +136,7 @@ describe("obsidian-auction", () => {
                 bidder: owner.publicKey,
                 computationAccount: getComputationAccAddress(
                     arciumEnv.arciumClusterOffset,
-                    computationOffsetBytes
+                    computationOffset
                 ),
                 clusterAccount: getClusterAccAddress(arciumEnv.arciumClusterOffset),
                 mxeAccount: getMXEAccAddress(program.programId),
@@ -145,7 +156,7 @@ describe("obsidian-auction", () => {
         console.log("Waiting for MPC computation to finalize...");
         const finalizeSig = await awaitComputationFinalization(
             provider,
-            computationOffsetBytes,
+            computationOffset,
             program.programId,
             "confirmed"
         );

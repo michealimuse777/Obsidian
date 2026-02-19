@@ -47,8 +47,7 @@
     "eslint-config-next": "16.1.1",
     "mocha": "^11.7.5",
     "tailwindcss": "^4",
-    "ts-mocha": "^11.1.0",
-    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }
