@@ -5,7 +5,7 @@ use anchor_spl::{
 };
 use arcium_anchor::prelude::*;
 
-declare_id!("8nkjktP5dWDYCkwR3fJFSuQANB1vyw5g5LTHCrxnf3CE");
+declare_id!("6XDoHizZE4avqDJbtdM8oqZinHSVP13LpMYhuivrmdoy");
 
 // Computation definition offsets — unique IDs for each encrypted instruction
 const COMP_DEF_OFFSET_COMPUTE_WINNER: u32 = comp_def_offset("compute_winner");
@@ -383,7 +383,7 @@ pub struct SubmitBid<'info> {
     #[account(
         address = derive_mxe_pda!()
     )]
-    pub mxe_account: Account<'info, MXEAccount>,
+    pub mxe_account: Box<Account<'info, MXEAccount>>,
 
     #[account(
         mut,
@@ -409,13 +409,13 @@ pub struct SubmitBid<'info> {
     #[account(
         address = derive_comp_def_pda!(COMP_DEF_OFFSET_COMPUTE_WINNER)
     )]
-    pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
+    pub comp_def_account: Box<Account<'info, ComputationDefinitionAccount>>,
 
     #[account(
         mut,
         address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet)
     )]
-    pub cluster_account: Account<'info, Cluster>,
+    pub cluster_account: Box<Account<'info, Cluster>>,
 
     #[account(
         mut,

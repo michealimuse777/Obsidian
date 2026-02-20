@@ -19,14 +19,17 @@ const fs = require("fs");
 const os = require("os");
 
 // ─── Config ───────────────────────────────────────────────────────
-const PROGRAM_ID = new PublicKey("8nkjktP5dWDYCkwR3fJFSuQANB1vyw5g5LTHCrxnf3CE");
+const PROGRAM_ID = new PublicKey("6XDoHizZE4avqDJbtdM8oqZinHSVP13LpMYhuivrmdoy");
 const ARCIUM_PROGRAM_ID = new PublicKey("Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ");
 const LUT_PROGRAM_ID = new PublicKey("AddressLookupTab1e1111111111111111111111111");
 const SYSTEM_PROGRAM_ID = new PublicKey("11111111111111111111111111111111");
 const RPC_URL = "https://api.devnet.solana.com";
 
 // ─── Load wallet ──────────────────────────────────────────────────
-const keypairPath = `${os.homedir()}/.config/solana/id.json`;
+const path = require("path");
+const winKp = path.resolve(process.cwd(), "win_keypair.json");
+const defaultKp = `${os.homedir()}/.config/solana/id.json`;
+const keypairPath = fs.existsSync(winKp) ? winKp : defaultKp;
 const rawKey = JSON.parse(fs.readFileSync(keypairPath, "utf-8"));
 const payer = Keypair.fromSecretKey(Uint8Array.from(rawKey));
 console.log("Payer:", payer.publicKey.toBase58());

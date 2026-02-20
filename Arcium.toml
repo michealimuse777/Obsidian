@@ -1,11 +1,10 @@
-[project]
-name = "obsidian"
+[localnet]
+nodes = 2
+localnet_timeout_secs = 60
+backends = ["Cerberus"]
+
+[clusters.devnet]
+offset = 456
 
 [encrypted_ixs]
 path = "encrypted-ixs"
-
-[cluster]
-offset = 456
-
-[program]
-id = "8nkjktP5dWDYCkwR3fJFSuQANB1vyw5g5LTHCrxnf3CE"

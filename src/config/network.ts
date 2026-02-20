@@ -11,13 +11,13 @@ export const NETWORK: NetworkType =
 export const CONFIG = {
     local: {
         rpcUrl: "http://127.0.0.1:8899",
-        programId: "8nkjktP5dWDYCkwR3fJFSuQANB1vyw5g5LTHCrxnf3CE",
+        programId: "6XDoHizZE4avqDJbtdM8oqZinHSVP13LpMYhuivrmdoy",
         wsEndpoint: "ws://127.0.0.1:8900",
         displayName: "Localnet",
     },
     devnet: {
         rpcUrl: "https://api.devnet.solana.com",
-        programId: "8nkjktP5dWDYCkwR3fJFSuQANB1vyw5g5LTHCrxnf3CE",
+        programId: "6XDoHizZE4avqDJbtdM8oqZinHSVP13LpMYhuivrmdoy",
         wsEndpoint: "wss://api.devnet.solana.com",
         displayName: "Devnet",
     },

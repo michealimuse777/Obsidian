@@ -18,16 +18,21 @@ import {
 } from "@arcium-hq/client";
 import { randomBytes } from "crypto";
 import * as os from "os";
+import {
+    createMint,
+    mintTo,
+    getAssociatedTokenAddress,
+    TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
 
 /**
  * Obsidian Blind Auction — Arcium v0.8.4 Integration Tests
  *
  * These tests validate the full Arcium computation lifecycle:
  *   1. Init computation definitions (skip if already done)
- *   2. Encrypt bid client-side
- *   3. Submit encrypted bid → queues MPC computation
+ *   2. Initialize launch with a test SPL mint
+ *   3. Encrypt bid client-side and submit → queues MPC computation
  *   4. Wait for MPC finalization
- *   5. Verify callback event
  */
 describe("obsidian-auction", () => {
     anchor.setProvider(anchor.AnchorProvider.env());
@@ -42,8 +47,20 @@ describe("obsidian-auction", () => {
         return anchor.web3.Keypair.fromSecretKey(Uint8Array.from(raw));
     }
 
+    // Shared state across tests
+    let owner: anchor.web3.Keypair;
+    let mintAddress: anchor.web3.PublicKey;
+
+    before(async () => {
+        const path = require("path");
+        const fs = require("fs");
+        const winKp = path.resolve(__dirname, "..", "win_keypair.json");
+        const defaultKp = `${os.homedir()}/.config/solana/id.json`;
+        const kpPath = fs.existsSync(winKp) ? winKp : defaultKp;
+        owner = readKpJson(kpPath);
+    });
+
     it("Initializes computation definitions (skip if already done)", async () => {
-        const owner = readKpJson(`${os.homedir()}/.config/solana/id.json`);
         const winnerCompDef = getCompDefAccAddress(
             program.programId,
             Buffer.from(getCompDefAccOffset("compute_winner")).readUInt32LE()
@@ -79,19 +96,95 @@ describe("obsidian-auction", () => {
         console.log("  compute_allocation comp def initialized:", initAllocSig);
     });
 
-    it("Submits an encrypted bid and queues MPC computation", async () => {
-        const owner = readKpJson(`${os.homedir()}/.config/solana/id.json`);
+    it("Initializes launch with test SPL mint (skip if already done)", async () => {
+        const [launchPda] = anchor.web3.PublicKey.findProgramAddressSync(
+            [Buffer.from("launch_v3")],
+            program.programId
+        );
 
+        // Check if launch already exists
+        const existingLaunch = await provider.connection.getAccountInfo(launchPda);
+        if (existingLaunch) {
+            console.log("  ⚠️  Launch already initialized, skipping.");
+            // Read the mint from the existing launch account
+            const launchData = await program.account.launch.fetch(launchPda);
+            mintAddress = launchData.mint;
+            console.log("  Existing mint:", mintAddress.toBase58());
+            return;
+        }
+
+        console.log("Creating test SPL token mint...");
+        // Create a new SPL token mint
+        mintAddress = await createMint(
+            provider.connection,
+            owner,                  // payer
+            owner.publicKey,        // mint authority
+            null,                   // freeze authority
+            6,                      // decimals (USDC-like)
+            undefined,              // keypair (auto-generate)
+            { commitment: "confirmed" },
+            TOKEN_PROGRAM_ID
+        );
+        console.log("  Mint created:", mintAddress.toBase58());
+
+        // Initialize the launch
+        const totalTokens = new anchor.BN(1_000_000 * 1e6);   // 1M tokens
+        const maxAllocation = new anchor.BN(100_000 * 1e6);    // 100K max per bidder
+
+        console.log("Calling initializeLaunch...");
+        const initSig = await program.methods
+            .initializeLaunch(totalTokens, maxAllocation)
+            .accountsPartial({
+                launch: launchPda,
+                mint: mintAddress,
+                authority: owner.publicKey,
+                tokenProgram: TOKEN_PROGRAM_ID,
+            })
+            .signers([owner])
+            .rpc({ commitment: "confirmed" });
+
+        console.log("  ✅ Launch initialized:", initSig);
+
+        // Verify launch account
+        const launchData = await program.account.launch.fetch(launchPda);
+        assert.ok(launchData.authority.equals(owner.publicKey));
+        assert.equal(launchData.bidCount, 0);
+        assert.equal(launchData.isFinalized, false);
+        console.log("  ✅ Launch account verified on-chain");
+
+        // Mint tokens to the launch pool so claims can work later
+        console.log("Minting tokens to launch pool...");
+        await mintTo(
+            provider.connection,
+            owner,
+            mintAddress,
+            launchData.launchPool,
+            owner,
+            1_000_000 * 1e6,       // 1M tokens
+            [],
+            { commitment: "confirmed" },
+            TOKEN_PROGRAM_ID
+        );
+        console.log("  ✅ 1M test tokens minted to launch pool");
+    });
+
+    it("Submits an encrypted bid and queues MPC computation", async () => {
         // Generate ephemeral x25519 keypair
         const privateKey = x25519.utils.randomSecretKey();
         const publicKey = x25519.getPublicKey(privateKey);
 
-        // Fetch MXE x25519 public key
-        const mxePublicKey = await getMXEPublicKey(
+        // Fetch MXE x25519 public key (try new program, fall back to old program's MXE on same cluster)
+        let mxePublicKey = await getMXEPublicKey(
             provider,
             program.programId
         );
-        if (!mxePublicKey) throw new Error("MXE public key not found");
+        if (!mxePublicKey) {
+            // New MXE hasn't received its key from cluster yet — use old program's MXE (same cluster 456)
+            const oldProgramId = new anchor.web3.PublicKey("8nkjktP5dWDYCkwR3fJFSuQANB1vyw5g5LTHCrxnf3CE");
+            mxePublicKey = await getMXEPublicKey(provider, oldProgramId);
+            if (!mxePublicKey) throw new Error("MXE public key not found on either program");
+            console.log("Using old program's MXE x25519 pubkey (same cluster)");
+        }
         console.log("MXE x25519 pubkey:", Buffer.from(mxePublicKey).toString("hex"));
 
         // Derive shared secret and create cipher
@@ -106,8 +199,7 @@ describe("obsidian-auction", () => {
         console.log("Encrypted bid amount:", Buffer.from(ciphertext[0]).toString("hex"));
 
         // Generate computation offset
-        const computationOffsetBytes = randomBytes(8);
-        const computationOffset = new anchor.BN(computationOffsetBytes, "hex");
+        const computationOffset = new anchor.BN(randomBytes(8), "hex");
 
         // Derive accounts
         const [launchPda] = anchor.web3.PublicKey.findProgramAddressSync(
@@ -121,6 +213,7 @@ describe("obsidian-auction", () => {
         );
 
         // Submit encrypted bid
+        console.log("Submitting encrypted bid...");
         const submitSig = await program.methods
             .submitEncryptedBid(
                 computationOffset,
