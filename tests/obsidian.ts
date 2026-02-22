@@ -12,6 +12,7 @@ import {
     getMempoolAccAddress,
     getExecutingPoolAccAddress,
     getMXEPublicKey,
+    getLookupTableAddress,
     RescueCipher,
     awaitComputationFinalization,
     x25519,
@@ -24,9 +25,13 @@ import {
     getAssociatedTokenAddress,
     TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
+import BN from "bn.js";
+
+const ARCIUM_PROGRAM_ID = new anchor.web3.PublicKey("Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ");
+const LUT_PROGRAM_ID = new anchor.web3.PublicKey("AddressLookupTab1e1111111111111111111111111");
 
 /**
- * Obsidian Blind Auction — Arcium v0.8.4 Integration Tests
+ * Obsidian Blind Auction — Arcium v0.8.5 Integration Tests
  *
  * These tests validate the full Arcium computation lifecycle:
  *   1. Init computation definitions (skip if already done)
@@ -61,35 +66,53 @@ describe("obsidian-auction", () => {
     });
 
     it("Initializes computation definitions (skip if already done)", async () => {
-        const winnerCompDef = getCompDefAccAddress(
-            program.programId,
-            Buffer.from(getCompDefAccOffset("compute_winner")).readUInt32LE()
-        );
+        const verifyBidOffset = Buffer.from(getCompDefAccOffset("verify_bid")).readUInt32LE();
+        const allocOffset = Buffer.from(getCompDefAccOffset("compute_allocation")).readUInt32LE();
+
+        const verifyBidCompDef = getCompDefAccAddress(program.programId, verifyBidOffset);
 
         // Check if already initialized
-        const existing = await provider.connection.getAccountInfo(winnerCompDef);
+        const existing = await provider.connection.getAccountInfo(verifyBidCompDef);
         if (existing) {
-            console.log("  ⚠️  Comp defs already initialized, skipping.");
+            console.log("  \u26a0\ufe0f  Comp defs already initialized, skipping.");
             return;
         }
 
-        console.log("Initializing compute_winner computation definition...");
-        const initWinnerSig = await program.methods
-            .initWinnerCompDef()
+        // Read MXE account to get lut_offset_slot
+        const mxeAddr = getMXEAccAddress(program.programId);
+        const mxeInfo = await provider.connection.getAccountInfo(mxeAddr);
+        if (!mxeInfo) throw new Error("MXE account not found");
+
+        // lut_offset_slot is a u64 — for v0.8.5
+        const lutOffsetSlot = new BN(mxeInfo.data.readBigUInt64LE(255).toString());
+        const lutAddress = getLookupTableAddress(program.programId, lutOffsetSlot);
+        console.log("  LUT address:", lutAddress.toBase58());
+
+        console.log("Initializing verify_bid computation definition...");
+        const initVerifyBidSig = await program.methods
+            .initVerifyBidCompDef()
             .accountsPartial({
                 payer: owner.publicKey,
-                mxeAccount: getMXEAccAddress(program.programId),
+                mxeAccount: mxeAddr,
+                compDefAccount: verifyBidCompDef,
+                addressLookupTable: lutAddress,
+                lutProgram: LUT_PROGRAM_ID,
+                arciumProgram: ARCIUM_PROGRAM_ID,
             })
             .signers([owner])
             .rpc();
-        console.log("  compute_winner comp def initialized:", initWinnerSig);
+        console.log("  verify_bid comp def initialized:", initVerifyBidSig);
 
         console.log("Initializing compute_allocation computation definition...");
         const initAllocSig = await program.methods
             .initAllocationCompDef()
             .accountsPartial({
                 payer: owner.publicKey,
-                mxeAccount: getMXEAccAddress(program.programId),
+                mxeAccount: mxeAddr,
+                compDefAccount: getCompDefAccAddress(program.programId, allocOffset),
+                addressLookupTable: lutAddress,
+                lutProgram: LUT_PROGRAM_ID,
+                arciumProgram: ARCIUM_PROGRAM_ID,
             })
             .signers([owner])
             .rpc();
@@ -173,18 +196,12 @@ describe("obsidian-auction", () => {
         const privateKey = x25519.utils.randomSecretKey();
         const publicKey = x25519.getPublicKey(privateKey);
 
-        // Fetch MXE x25519 public key (try new program, fall back to old program's MXE on same cluster)
-        let mxePublicKey = await getMXEPublicKey(
+        // Fetch MXE x25519 public key
+        const mxePublicKey = await getMXEPublicKey(
             provider,
             program.programId
         );
-        if (!mxePublicKey) {
-            // New MXE hasn't received its key from cluster yet — use old program's MXE (same cluster 456)
-            const oldProgramId = new anchor.web3.PublicKey("8nkjktP5dWDYCkwR3fJFSuQANB1vyw5g5LTHCrxnf3CE");
-            mxePublicKey = await getMXEPublicKey(provider, oldProgramId);
-            if (!mxePublicKey) throw new Error("MXE public key not found on either program");
-            console.log("Using old program's MXE x25519 pubkey (same cluster)");
-        }
+        if (!mxePublicKey) throw new Error("MXE public key not found — finalize-mxe-keys may not have run");
         console.log("MXE x25519 pubkey:", Buffer.from(mxePublicKey).toString("hex"));
 
         // Derive shared secret and create cipher
@@ -237,7 +254,7 @@ describe("obsidian-auction", () => {
                 executingPool: getExecutingPoolAccAddress(arciumEnv.arciumClusterOffset),
                 compDefAccount: getCompDefAccAddress(
                     program.programId,
-                    Buffer.from(getCompDefAccOffset("compute_winner")).readUInt32LE()
+                    Buffer.from(getCompDefAccOffset("verify_bid")).readUInt32LE()
                 ),
             })
             .signers([owner])

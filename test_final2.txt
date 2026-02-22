@@ -1,0 +1,42 @@
+﻿node : bigint: Failed to load bindings, pure JS will 
+be used (try npm run rebuild?)
+At line:1 char:229
++ ... pair.json"; node --import tsx 
+node_modules\mocha\bin\mocha.js --timeo ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (bigint:  
+   Failed ...m run rebuild?):String) [], RemoteExcep  
+  tion
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+
+  obsidian-auction
+  ΓÜá∩╕Å  Comp defs already initialized, skipping.
+    Γ£ö Initializes computation definitions (skip if already done) (924ms)
+  ΓÜá∩╕Å  Launch already initialized, skipping.
+  Existing mint: G9VCX9s1ASecZdDBVrJPbgo5XF6uvEs67nuMZEdJZTbq
+    Γ£ö Initializes launch with test SPL mint (skip if already done) (402ms)
+MXE x25519 pubkey: a773c936ca34c57e13c57e135642ca858d079d46aab8f9b48c5bebea69512963
+Encrypted bid amount: 083ab79249a6ef2010ae32f9b648bdf9765f816c15a0fab4d3a8ae55d52c8d13
+Submitting encrypted bid...
+    1) Submits an encrypted bid and queues MPC computation
+Γ£à Claim test placeholder ΓÇö requires finalized launch state
+    Γ£ö Claims tokens after finalization
+
+
+  3 passing (3s)
+  1 failing
+
+  1) obsidian-auction
+       Submits an encrypted bid and queues MPC computation:
+     Error: AnchorError thrown in programs/arcium/src/instructions/computation.rs:280. Error Code: InvalidArguments. Error Number: 6301. Error Message: Arguments supplied are invalid.
+      at AnchorError.parse (node_modules\@coral-xyz\anchor\src\error.ts:152:14)
+      at translateError (node_modules\@coral-xyz\anchor\src\error.ts:277:35)
+      at MethodsBuilder.rpc (node_modules\@coral-xyz\anchor\src\program\namespace\rpc.ts:35:29)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async Context.<anonymous> (tests\obsidian.ts:235:27)
+
+
+

@@ -7,7 +7,7 @@ import * as anchor from "@coral-xyz/anchor";
 import * as fs from "fs";
 import * as path from "path";
 
-const PROGRAM_ID = new anchor.web3.PublicKey("6XDoHizZE4avqDJbtdM8oqZinHSVP13LpMYhuivrmdoy");
+const PROGRAM_ID = new anchor.web3.PublicKey("CsS69vzRAZ4dJXFg68tTnP2ei4XCbYzPENdzQnBWU5Ua");
 const RPC_URL = "https://devnet.helius-rpc.com/?api-key=f0d2c504-70d7-4e0a-9a16-ed251386301a";
 
 async function main() {
@@ -25,6 +25,7 @@ async function main() {
     console.log("Program:", PROGRAM_ID.toBase58());
 
     const circuits = [
+        { name: "verify_bid", file: "build/verify_bid.arcis" },
         { name: "compute_winner", file: "build/compute_winner.arcis" },
         { name: "compute_allocation", file: "build/compute_allocation.arcis" },
     ];

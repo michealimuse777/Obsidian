@@ -1,0 +1,46 @@
+﻿node : bigint: Failed to load bindings, pure JS will 
+be used (try npm run rebuild?)
+At line:1 char:229
++ ... pair.json"; node --import tsx 
+node_modules\mocha\bin\mocha.js --timeo ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (bigint:  
+   Failed ...m run rebuild?):String) [], RemoteExcep  
+  tion
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+
+  obsidian-auction
+  LUT address: na32uhgRuG1Nwg4nLcCD3A4M1DQFMttEf6j7xVypquA
+Initializing compute_winner computation definition...
+  compute_winner comp def initialized: mQYzZVdrTwLMFSDfB8HeNWJxFziXYsHj6EnxrJDDHWKXXbq7ehtXt4dR2mn6RcLYCro4nnKv2xD6vTVQGRvQcc4
+Initializing compute_allocation computation definition...
+  compute_allocation comp def initialized: 52ULVHieqmz5YkWG8Vo4f4pGKKDAPJNkdHGiCzBgRkx3ESDUjqshxHwZ3XFMh5G1PbjVmPKqCC2v7q8r3kcuLfpm
+    Γ£ö Initializes computation definitions (skip if already done) (6179ms)
+  ΓÜá∩╕Å  Launch already initialized, skipping.
+  Existing mint: G9VCX9s1ASecZdDBVrJPbgo5XF6uvEs67nuMZEdJZTbq
+    Γ£ö Initializes launch with test SPL mint (skip if already done) (485ms)
+MXE x25519 pubkey: a773c936ca34c57e13c57e135642ca858d079d46aab8f9b48c5bebea69512963
+Encrypted bid amount: 361e682648c5161cb346f0d1cb43ee4aa2248f435aab4aeacc02ba4052ed2123
+Submitting encrypted bid...
+    1) Submits an encrypted bid and queues MPC computation
+Γ£à Claim test placeholder ΓÇö requires finalized launch state
+    Γ£ö Claims tokens after finalization
+
+
+  3 passing (8s)
+  1 failing
+
+  1) obsidian-auction
+       Submits an encrypted bid and queues MPC computation:
+     Error: AnchorError thrown in programs/arcium/src/instructions/computation.rs:204. Error Code: ComputationDefinitionNotCompleted. Error Number: 6300. Error Message: Computation definition is not completed.
+      at AnchorError.parse (node_modules\@coral-xyz\anchor\src\error.ts:152:14)
+      at translateError (node_modules\@coral-xyz\anchor\src\error.ts:277:35)
+      at MethodsBuilder.rpc (node_modules\@coral-xyz\anchor\src\program\namespace\rpc.ts:35:29)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async Context.<anonymous> (tests\obsidian.ts:235:27)
+
+
+

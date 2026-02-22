@@ -1,0 +1,118 @@
+Using old program's MXE x25519 pubkey (same cluster)
+MXE x25519 pubkey: 63dc861ee9dcfe034dfe5c0a7f794644cd2ce04f946cf5da62c91c1ceae67e7f
+Encrypted bid amount: 1e0098cef2238824a746cdab52df5b46377f3bc32a98aa81937ca1a290c86d41
+Submitting encrypted bid...
+{
+  "stats": {
+    "suites": 1,
+    "tests": 1,
+    "passes": 0,
+    "pending": 0,
+    "failures": 1,
+    "start": "2026-02-20T17:44:12.507Z",
+    "end": "2026-02-20T17:44:13.884Z",
+    "duration": 1377
+  },
+  "tests": [
+    {
+      "title": "Submits an encrypted bid and queues MPC computation",
+      "fullTitle": "obsidian-auction Submits an encrypted bid and queues MPC computation",
+      "file": "C:\\Users\\Zala\\.gemini\\antigravity\\scratch\\obsidian\\tests\\obsidian.ts",
+      "duration": 1360,
+      "currentRetry": 0,
+      "err": {
+        "stack": "Error: AnchorError thrown in programs/arcium/src/instructions/computation.rs:165. Error Code: MxeKeysNotSet. Error Number: 6002. Error Message: The MXE keys are not set, i.e. not all the nodes of the MXE cluster agreed on the MXE keys.\n    at AnchorError.parse (node_modules\\@coral-xyz\\anchor\\src\\error.ts:152:14)\n    at translateError (node_modules\\@coral-xyz\\anchor\\src\\error.ts:277:35)\n    at MethodsBuilder.rpc (node_modules\\@coral-xyz\\anchor\\src\\program\\namespace\\rpc.ts:35:29)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async Context.<anonymous> (tests\\obsidian.ts:217:27)",
+        "message": "AnchorError thrown in programs/arcium/src/instructions/computation.rs:165. Error Code: MxeKeysNotSet. Error Number: 6002. Error Message: The MXE keys are not set, i.e. not all the nodes of the MXE cluster agreed on the MXE keys.",
+        "errorLogs": [
+          "Program log: AnchorError thrown in programs/arcium/src/instructions/computation.rs:165. Error Code: MxeKeysNotSet. Error Number: 6002. Error Message: The MXE keys are not set, i.e. not all the nodes of the MXE cluster agreed on the MXE keys."
+        ],
+        "logs": [
+          "Program 6XDoHizZE4avqDJbtdM8oqZinHSVP13LpMYhuivrmdoy invoke [1]",
+          "Program log: Instruction: SubmitEncryptedBid",
+          "Program 11111111111111111111111111111111 invoke [2]",
+          "Program 11111111111111111111111111111111 success",
+          "Program 11111111111111111111111111111111 invoke [2]",
+          "Program 11111111111111111111111111111111 success",
+          "Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ invoke [2]",
+          "Program log: Instruction: QueueComputation",
+          "Program 11111111111111111111111111111111 invoke [3]",
+          "Program 11111111111111111111111111111111 success",
+          "Program log: AnchorError thrown in programs/arcium/src/instructions/computation.rs:165. Error Code: MxeKeysNotSet. Error Number: 6002. Error Message: The MXE keys are not set, i.e. not all the nodes of the MXE cluster agreed on the MXE keys.",
+          "Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ consumed 31943 of 140180 compute units",
+          "Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ failed: custom program error: 0x1772",
+          "Program 6XDoHizZE4avqDJbtdM8oqZinHSVP13LpMYhuivrmdoy consumed 91763 of 200000 compute units",
+          "Program 6XDoHizZE4avqDJbtdM8oqZinHSVP13LpMYhuivrmdoy failed: custom program error: 0x1772"
+        ],
+        "error": {
+          "errorCode": {
+            "code": "MxeKeysNotSet",
+            "number": 6002
+          },
+          "errorMessage": "The MXE keys are not set, i.e. not all the nodes of the MXE cluster agreed on the MXE keys",
+          "origin": {
+            "file": "programs/arcium/src/instructions/computation.rs",
+            "line": 165
+          }
+        },
+        "_programErrorStack": {
+          "stack": [
+            "6XDoHizZE4avqDJbtdM8oqZinHSVP13LpMYhuivrmdoy",
+            "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+          ]
+        }
+      }
+    }
+  ],
+  "pending": [],
+  "failures": [
+    {
+      "title": "Submits an encrypted bid and queues MPC computation",
+      "fullTitle": "obsidian-auction Submits an encrypted bid and queues MPC computation",
+      "file": "C:\\Users\\Zala\\.gemini\\antigravity\\scratch\\obsidian\\tests\\obsidian.ts",
+      "duration": 1360,
+      "currentRetry": 0,
+      "err": {
+        "stack": "Error: AnchorError thrown in programs/arcium/src/instructions/computation.rs:165. Error Code: MxeKeysNotSet. Error Number: 6002. Error Message: The MXE keys are not set, i.e. not all the nodes of the MXE cluster agreed on the MXE keys.\n    at AnchorError.parse (node_modules\\@coral-xyz\\anchor\\src\\error.ts:152:14)\n    at translateError (node_modules\\@coral-xyz\\anchor\\src\\error.ts:277:35)\n    at MethodsBuilder.rpc (node_modules\\@coral-xyz\\anchor\\src\\program\\namespace\\rpc.ts:35:29)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async Context.<anonymous> (tests\\obsidian.ts:217:27)",
+        "message": "AnchorError thrown in programs/arcium/src/instructions/computation.rs:165. Error Code: MxeKeysNotSet. Error Number: 6002. Error Message: The MXE keys are not set, i.e. not all the nodes of the MXE cluster agreed on the MXE keys.",
+        "errorLogs": [
+          "Program log: AnchorError thrown in programs/arcium/src/instructions/computation.rs:165. Error Code: MxeKeysNotSet. Error Number: 6002. Error Message: The MXE keys are not set, i.e. not all the nodes of the MXE cluster agreed on the MXE keys."
+        ],
+        "logs": [
+          "Program 6XDoHizZE4avqDJbtdM8oqZinHSVP13LpMYhuivrmdoy invoke [1]",
+          "Program log: Instruction: SubmitEncryptedBid",
+          "Program 11111111111111111111111111111111 invoke [2]",
+          "Program 11111111111111111111111111111111 success",
+          "Program 11111111111111111111111111111111 invoke [2]",
+          "Program 11111111111111111111111111111111 success",
+          "Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ invoke [2]",
+          "Program log: Instruction: QueueComputation",
+          "Program 11111111111111111111111111111111 invoke [3]",
+          "Program 11111111111111111111111111111111 success",
+          "Program log: AnchorError thrown in programs/arcium/src/instructions/computation.rs:165. Error Code: MxeKeysNotSet. Error Number: 6002. Error Message: The MXE keys are not set, i.e. not all the nodes of the MXE cluster agreed on the MXE keys.",
+          "Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ consumed 31943 of 140180 compute units",
+          "Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ failed: custom program error: 0x1772",
+          "Program 6XDoHizZE4avqDJbtdM8oqZinHSVP13LpMYhuivrmdoy consumed 91763 of 200000 compute units",
+          "Program 6XDoHizZE4avqDJbtdM8oqZinHSVP13LpMYhuivrmdoy failed: custom program error: 0x1772"
+        ],
+        "error": {
+          "errorCode": {
+            "code": "MxeKeysNotSet",
+            "number": 6002
+          },
+          "errorMessage": "The MXE keys are not set, i.e. not all the nodes of the MXE cluster agreed on the MXE keys",
+          "origin": {
+            "file": "programs/arcium/src/instructions/computation.rs",
+            "line": 165
+          }
+        },
+        "_programErrorStack": {
+          "stack": [
+            "6XDoHizZE4avqDJbtdM8oqZinHSVP13LpMYhuivrmdoy",
+            "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+          ]
+        }
+      }
+    }
+  ],
+  "passes": []
+}

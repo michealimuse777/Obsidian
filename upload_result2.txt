@@ -1,0 +1,20 @@
+﻿Wallet: 4Hs5YVKrpuCVGDkLtaADjsb6uD1doKBx64R1vWRLNMAj
+Program: CsS69vzRAZ4dJXFg68tTnP2ei4XCbYzPENdzQnBWU5Ua
+
+=== Uploading circuit: compute_winner ===
+  File: build/compute_winner.arcis (212292 bytes)
+Circuit compute_winner skipped: OnchainFinalized
+  Γ£à Circuit uploaded!
+
+=== Uploading circuit: compute_allocation ===
+  File: build/compute_allocation.arcis (3043177 bytes)
+Circuit compute_allocation skipped: OnchainFinalized
+  Γ£à Circuit uploaded!
+
+=== Finalizing: compute_winner ===
+  Γ£à Finalized! Sig: 5n5eYB1qTT8f93KpXhUJ2ypGkKSBBYkdDoeC9e2F6dfCGZPufCXdtW6h9vXrMMA2WxgCzdFxteJr8o2bmgbwvEjC
+
+=== Finalizing: compute_allocation ===
+  Γ£à Finalized! Sig: 472ogG1spMjVyr4tia16qTrPijL67iCorNi4eqf2EC2Vv1Phdb823ViYKiGcSLg2vWGwfUGLw1b5LGChyb7YBRq1
+
+Done!

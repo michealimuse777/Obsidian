@@ -1,0 +1,60 @@
+﻿node : bigint: Failed to load bindings, pure JS will 
+be used (try npm run rebuild?)
+At line:1 char:229
++ ... pair.json"; node --import tsx 
+node_modules\mocha\bin\mocha.js --timeo ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (bigint:  
+   Failed ...m run rebuild?):String) [], RemoteExcep  
+  tion
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+
+  obsidian-auction
+Initializing compute_winner computation definition...
+    1) Initializes computation definitions (skip if already done)
+Creating test SPL token mint...
+  Mint created: G9VCX9s1ASecZdDBVrJPbgo5XF6uvEs67nuMZEdJZTbq
+Calling initializeLaunch...
+  Γ£à Launch initialized: 61NbpSTd3JTkHdDipKyvR8a9ALEfXcwYiFThseTF6ZT2g99zbES113X3o61fjxuALpG7exdgAVb4UsGCn8yssX89
+  Γ£à Launch account verified on-chain
+Minting tokens to launch pool...
+  Γ£à 1M test tokens minted to launch pool
+    Γ£ö Initializes launch with test SPL mint (skip if already done) (6892ms)
+MXE x25519 pubkey: a773c936ca34c57e13c57e135642ca858d079d46aab8f9b48c5bebea69512963
+Encrypted bid amount: 3806c92b5b16d1d032d8cf6d438348364c303fcc55f1569d5d6f66329ec00636
+Submitting encrypted bid...
+    2) Submits an encrypted bid and queues MPC computation
+Γ£à Claim test placeholder ΓÇö requires finalized launch state
+    Γ£ö Claims tokens after finalization
+
+
+  2 passing (9s)
+  2 failing
+
+  1) obsidian-auction
+       Initializes computation definitions (skip if already done):
+     Error: Account `compDefAccount` not provided.
+      at <anonymous> (node_modules\@coral-xyz\anchor\src\program\common.ts:51:15)
+      at Array.forEach (<anonymous>)
+      at validateAccounts (node_modules\@coral-xyz\anchor\src\program\common.ts:46:14)
+      at ix (node_modules\@coral-xyz\anchor\src\program\namespace\instruction.ts:44:23)
+      at txFn (node_modules\@coral-xyz\anchor\src\program\namespace\transaction.ts:24:14)
+      at MethodsBuilder.rpc (node_modules\@coral-xyz\anchor\src\program\namespace\rpc.ts:21:18)
+      at MethodsBuilder.rpc (node_modules\@coral-xyz\anchor\src\program\namespace\methods.ts:434:17)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async Context.<anonymous> (tests\obsidian.ts:77:31)
+
+  2) obsidian-auction
+       Submits an encrypted bid and queues MPC computation:
+     Error: AnchorError caused by account: comp_def_account. Error Code: AccountNotInitialized. Error Number: 3012. Error Message: The program expected this account to be already initialized.
+      at AnchorError.parse (node_modules\@coral-xyz\anchor\src\error.ts:168:14)
+      at translateError (node_modules\@coral-xyz\anchor\src\error.ts:277:35)
+      at MethodsBuilder.rpc (node_modules\@coral-xyz\anchor\src\program\namespace\rpc.ts:35:29)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async Context.<anonymous> (tests\obsidian.ts:211:27)
+
+
+

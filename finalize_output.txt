@@ -1,0 +1,15 @@
+
+thread 'main' panicked at /home/runner/work/arcium-tooling/arcium-tooling/client/src/transactions.rs:588:10:
+called `Result::unwrap()` on an `Err` value: SolanaClientError(Error { request: Some(SendTransaction), kind: RpcError(RpcResponseError { code: -32002, message: "Transaction simulation failed: Error processing Instruction 0: custom program error: 0x1772", data: SendTransactionPreflightFailure(RpcSimulateTransactionResult { err: Some(InstructionError(0, Custom(6002))), logs: Some(["Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ invoke [1]", "Program log: Instruction: FinalizeMxeKeys", "Program log: AnchorError thrown in programs/arcium/src/instructions/mxe.rs:572. Error Code: MxeKeysNotSet. Error Number: 6002. Error Message: The MXE keys are not set, i.e. not all the nodes of the MXE cluster agreed on the MXE keys.", "Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ consumed 10363 of 200000 compute units", "Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ failed: custom program error: 0x1772"]), accounts: None, units_consumed: Some(10363), loaded_accounts_data_size: Some(1483857), return_data: None, inner_instructions: None, replacement_blockhash: None }) }) })
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: core::result::unwrap_failed
+   3: arcium_client::transactions::send_tx::{{closure}}
+   4: arcium_client::transactions::finalize_mxe_keys::{{closure}}
+   5: arcium::execute_cli::{{closure}}
+   6: tokio::runtime::park::CachedParkThread::block_on
+   7: tokio::runtime::context::runtime::enter_runtime
+   8: tokio::runtime::runtime::Runtime::block_on
+   9: arcium::main
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.

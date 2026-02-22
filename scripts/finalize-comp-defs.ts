@@ -6,7 +6,7 @@ import * as anchor from "@coral-xyz/anchor";
 import * as fs from "fs";
 import * as os from "os";
 
-const PROGRAM_ID = new anchor.web3.PublicKey("6XDoHizZE4avqDJbtdM8oqZinHSVP13LpMYhuivrmdoy");
+const PROGRAM_ID = new anchor.web3.PublicKey("CsS69vzRAZ4dJXFg68tTnP2ei4XCbYzPENdzQnBWU5Ua");
 
 async function main() {
     const path = await import("path");

@@ -1,0 +1,33 @@
+﻿Payer: 4Hs5YVKrpuCVGDkLtaADjsb6uD1doKBx64R1vWRLNMAj
+Balance: 1.5218 SOL
+
+MXE account confirmed: CgWuDfFvm4729GuvwJB26jPd17MhWWjfjKzrEjQMmStv (273 bytes)
+
+=== Initializing "compute_winner" comp def ===
+  Disc:      9e43534d8faf4d49
+  MXE:       CgWuDfFvm4729GuvwJB26jPd17MhWWjfjKzrEjQMmStv
+  CompDef:   7VCk1buG6FSpWmAEPM4W1aUZFCiUF9F1apMdyzYSK75J
+  Offset:    3303274052
+  LUT offset slot: 281474976776192 (at byte 261)
+node : FATAL: Error: LUT account 
+ARPRjnXnEHxQfDXqwiAQp7U93yBbWRb4N6kwTnZ3nPp1 not 
+found on-chain
+At line:1 char:1
++ node scripts\init-comp-defs.cjs 2>&1 | Out-File 
+-FilePath comp_init_r ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (FATAL: E 
+   rror: L... found on-chain:String) [], RemoteExcep  
+  tion
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    at findMxeLutAddress (C:\Users\Zala\.gemini\antigr
+avity\scratch\obsidian\scripts\init-comp-defs.cjs:89:2
+5)
+    at process.processTicksAndRejections 
+(node:internal/process/task_queues:103:5)
+    at async initCompDef (C:\Users\Zala\.gemini\antigr
+avity\scratch\obsidian\scripts\init-comp-defs.cjs:115:
+17)
+    at async main (C:\Users\Zala\.gemini\antigravity\s
+cratch\obsidian\scripts\init-comp-defs.cjs:161:5)

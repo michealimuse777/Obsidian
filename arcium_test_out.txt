@@ -1,0 +1,44 @@
+Syncing program keys... (use --skip-keys-sync to skip)
+Clean completed successfully!
+Syncing program ids for the configured cluster (devnet)
+
+All program id declarations are synced.
+Checking if encrypted instructions are up to date.
+Encrypted instructions are up to date. Skipping build.
+Running tests against devnet cluster (offset: 456)
+Starting anchor test against devnet cluster...
+
+Found a 'test' script in the Anchor.toml. Running it as a test suite!
+
+Running test suite: "/mnt/c/Users/Zala/.gemini/antigravity/scratch/obsidian/Anchor.toml"
+
+
+
+  obsidian-auction
+  ⚠️  Comp defs already initialized, skipping.
+    ✔ Initializes computation definitions (skip if already done) (607ms)
+  ⚠️  Launch already initialized, skipping.
+  Existing mint: 2vtNztd4wWBMB4LDxeGffnckEimvbcwpaHvrfC18eZ9q
+    ✔ Initializes launch with test SPL mint (skip if already done) (344ms)
+MXE x25519 pubkey: 63dc861ee9dcfe034dfe5c0a7f794644cd2ce04f946cf5da62c91c1ceae67e7f
+Encrypted bid amount: 53b56fc64170176d731f0ce6382aee818332cb67a6ddaf5e4084c1b1dc0a6e3a
+Submitting encrypted bid...
+    1) Submits an encrypted bid and queues MPC computation
+✅ Claim test placeholder — requires finalized launch state
+    ✔ Claims tokens after finalization
+
+
+  3 passing (2s)
+  1 failing
+
+  1) obsidian-auction
+       Submits an encrypted bid and queues MPC computation:
+     Error: AnchorError thrown in programs/arcium/src/instructions/computation.rs:204. Error Code: ComputationDefinitionNotCompleted. Error Number: 6300. Error Message: Computation definition is not completed.
+      at AnchorError.parse (node_modules/@coral-xyz/anchor/src/error.ts:152:14)
+      at translateError (node_modules/@coral-xyz/anchor/src/error.ts:277:35)
+      at MethodsBuilder.rpc (node_modules/@coral-xyz/anchor/src/program/namespace/rpc.ts:35:29)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async Context.<anonymous> (tests/obsidian.ts:206:27)
+
+
+

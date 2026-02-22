@@ -1,0 +1,46 @@
+﻿Wallet: 4Hs5YVKrpuCVGDkLtaADjsb6uD1doKBx64R1vWRLNMAj
+Program: CsS69vzRAZ4dJXFg68tTnP2ei4XCbYzPENdzQnBWU5Ua
+
+=== Uploading circuit: compute_winner ===
+  File: build/compute_winner.arcis (330408 bytes)
+Initiated raw circuit acc with raw circuit index 0
+Sending resize tx 0 of 2
+Sent resize tx 0 of 2
+Sending resize tx 1 of 2
+  Γ¥î Upload error: Simulation failed. 
+Message: Transaction simulation failed: Error processing Instruction 2: custom program error: 0x1. 
+Logs: 
+[
+  "Program 11111111111111111111111111111111 success",
+  "Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ consumed 9489 of 1390552 compute units",
+  "Program Arcj82pX7
+  Logs: Program 11111111111111111111111111111111 invoke [2]
+  Transfer: insufficient lamports 14805591, need 71270400
+  Program 11111111111111111111111111111111 failed: custom program error: 0x1
+  Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ consumed 7176 of 1381063 compute units
+  Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ failed: custom program error: 0x1
+
+=== Uploading circuit: compute_allocation ===
+  File: build/compute_allocation.arcis (3043177 bytes)
+Initiated raw circuit acc with raw circuit index 0
+Sending resize tx 0 of 17
+  Γ¥î Upload error: Simulation failed. 
+Message: Transaction simulation failed: Error processing Instruction 1: custom program error: 0x1. 
+Logs: 
+[
+  "Program 11111111111111111111111111111111 success",
+  "Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ consumed 8710 of 1400000 compute units",
+  "Program Arcj82pX7
+  Logs: Program 11111111111111111111111111111111 invoke [2]
+  Transfer: insufficient lamports 13909711, need 71270400
+  Program 11111111111111111111111111111111 failed: custom program error: 0x1
+  Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ consumed 6397 of 1391290 compute units
+  Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ failed: custom program error: 0x1
+
+=== Finalizing: compute_winner ===
+  Γ£à Finalized! Sig: 2RyzvbmA58KNpVg7ZkLBccP3YwHPcqpqCGtyQ538fEHtECXFdvu28TUfJBBAfjcPcrBoA27eFUFsA3MAUowtqpcD
+
+=== Finalizing: compute_allocation ===
+  Γ£à Finalized! Sig: 2Js2ECuMLbo3raevzGVLtCbLbFxuD2LySzTfuVsTLYSfz8NWN4HpKSU17QadnnsMTDnyyGW32Y8Fhny2nMcDhgPh
+
+Done!

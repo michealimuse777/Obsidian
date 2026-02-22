@@ -19,11 +19,11 @@ const fs = require("fs");
 const os = require("os");
 
 // ─── Config ───────────────────────────────────────────────────────
-const PROGRAM_ID = new PublicKey("6XDoHizZE4avqDJbtdM8oqZinHSVP13LpMYhuivrmdoy");
+const PROGRAM_ID = new PublicKey("CsS69vzRAZ4dJXFg68tTnP2ei4XCbYzPENdzQnBWU5Ua");
 const ARCIUM_PROGRAM_ID = new PublicKey("Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ");
 const LUT_PROGRAM_ID = new PublicKey("AddressLookupTab1e1111111111111111111111111");
 const SYSTEM_PROGRAM_ID = new PublicKey("11111111111111111111111111111111");
-const RPC_URL = "https://api.devnet.solana.com";
+const RPC_URL = "https://devnet.helius-rpc.com/?api-key=f0d2c504-70d7-4e0a-9a16-ed251386301a";
 
 // ─── Load wallet ──────────────────────────────────────────────────
 const path = require("path");

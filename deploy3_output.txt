@@ -1,0 +1,16 @@
+Initializing MXE account only...
+
+thread 'main' panicked at /home/runner/work/arcium-tooling/arcium-tooling/client/src/transactions.rs:588:10:
+called `Result::unwrap()` on an `Err` value: SolanaClientError(Error { request: Some(SendTransaction), kind: RpcError(RpcResponseError { code: -32002, message: "Transaction simulation failed: Error processing Instruction 0: custom program error: 0x0", data: SendTransactionPreflightFailure(RpcSimulateTransactionResult { err: Some(InstructionError(0, Custom(0))), logs: Some(["Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ invoke [1]", "Program log: Instruction: InitMxePart1", "Program 11111111111111111111111111111111 invoke [2]", "Allocate: account Address { address: HVeTn4FSC6cvt9F2bq3c12SncRrsDP1fgXvgh7S6oB52, base: None } already in use", "Program 11111111111111111111111111111111 failed: custom program error: 0x0", "Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ consumed 8226 of 400000 compute units", "Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ failed: custom program error: 0x0"]), accounts: None, units_consumed: Some(8226), loaded_accounts_data_size: Some(2968372), return_data: None, inner_instructions: None, replacement_blockhash: None }) }) })
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: core::result::unwrap_failed
+   3: arcium_client::transactions::send_tx::{{closure}}
+   4: arcium_client::transactions::init_mxe::{{closure}}
+   5: arcium::execute_cli::{{closure}}
+   6: tokio::runtime::park::CachedParkThread::block_on
+   7: tokio::runtime::context::runtime::enter_runtime
+   8: tokio::runtime::runtime::Runtime::block_on
+   9: arcium::main
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.

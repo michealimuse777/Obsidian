@@ -1,0 +1,35 @@
+﻿node : bigint: Failed to load bindings, pure JS will be used (try npm 
+run rebuild?)
+At line:1 char:229
++ ... pair.json"; node --import tsx node_modules\mocha\bin\mocha.js 
+--timeo ...
++                 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (bigint: Failed ...m run  
+   rebuild?):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+
+  obsidian-auction
+  ΓÜá∩╕Å  Comp defs already initialized, skipping.
+    Γ£ö Initializes computation definitions (skip if already done) (2775ms)
+  ΓÜá∩╕Å  Launch already initialized, skipping.
+  Existing mint: EPTmS2N2rMoMWe9vSyxuWTWZzCWM5kUdXM4UpgfY2kD1
+    Γ£ö Initializes launch with test SPL mint (skip if already done) (434ms)
+    1) Submits an encrypted bid and queues MPC computation
+Γ£à Claim test placeholder ΓÇö requires finalized launch state
+    Γ£ö Claims tokens after finalization
+
+
+  3 passing (3s)
+  1 failing
+
+  1) obsidian-auction
+       Submits an encrypted bid and queues MPC computation:
+     Error: MXE public key not found
+      at Context.<anonymous> (tests\obsidian.ts:181:34)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+
+

@@ -1,0 +1,31 @@
+bigint: Failed to load bindings, pure JS will be used (try npm run rebuild?)
+
+
+  obsidian-auction
+  ⚠️  Comp defs already initialized, skipping.
+    ✔ Initializes computation definitions (skip if already done) (3404ms)
+  ⚠️  Launch already initialized, skipping.
+  Existing mint: 2vtNztd4wWBMB4LDxeGffnckEimvbcwpaHvrfC18eZ9q
+    ✔ Initializes launch with test SPL mint (skip if already done) (609ms)
+MXE x25519 pubkey: 63dc861ee9dcfe034dfe5c0a7f794644cd2ce04f946cf5da62c91c1ceae67e7f
+Encrypted bid amount: eb0928ce2bcc1e765aea55dd16d282a6e63f3dbd822048928354791af6b96327
+Submitting encrypted bid...
+    1) Submits an encrypted bid and queues MPC computation
+✅ Claim test placeholder — requires finalized launch state
+    ✔ Claims tokens after finalization
+
+
+  3 passing (6s)
+  1 failing
+
+  1) obsidian-auction
+       Submits an encrypted bid and queues MPC computation:
+     Error: AnchorError thrown in programs/arcium/src/instructions/computation.rs:204. Error Code: ComputationDefinitionNotCompleted. Error Number: 6300. Error Message: Computation definition is not completed.
+      at AnchorError.parse (node_modules/@coral-xyz/anchor/src/error.ts:152:14)
+      at translateError (node_modules/@coral-xyz/anchor/src/error.ts:277:35)
+      at MethodsBuilder.rpc (node_modules/@coral-xyz/anchor/src/program/namespace/rpc.ts:35:29)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async Context.<anonymous> (tests/obsidian.ts:206:27)
+
+
+

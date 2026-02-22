@@ -1,0 +1,59 @@
+arcium-cli 0.8.5
+
+USAGE:
+    arcium <SUBCOMMAND>
+
+FLAGS:
+    -h, --help       
+            Prints help information
+
+    -V, --version    
+            Prints version information
+
+
+SUBCOMMANDS:
+    activate-cluster             Activate a cluster
+    arx-active                   Returns whether a given arx node account is active or not
+    arx-info                     Returns onchain information about an ARX node
+    build                        Builds the Arcium project
+    claim-node-fees              Claim accumulated fees for a node
+    clean                        Remove all localnet account artifacts and build artifacts
+    computation                  Fetches and prints the given computation account
+    deploy                       Deploys the MXE program and initializes its MXE account
+    execpool                     Fetches and prints all computations in a given execpool account
+    fee-proposals                Returns the current active fee proposals for a given cluster
+    finalize-mxe-keys            Finalizes the MXE keys for a given cluster
+    gen-bls-key                  Generates a new BLS keypair and writes it to a file
+    generate-x25519              Generate and save an X25519 keypair
+    get-peer-id                  Reads and prints the peer ID from an identity keypair file
+    help                         Prints this message or the help of the given subcommand(s)
+    init                         Initializes a new Arcium project
+    init-arcium-network          Initializes the Arcium network program
+    init-arx-accs                Initializes all onchain state required for an ARX node in one command
+    init-arx-node                Initializes an ARX node account
+    init-cluster                 Initializes a new Cluster
+    init-mxe                     Init a new MXE
+    init-node-operator           Initializes a node operator account
+    init-recovery-peer           Initializes a recovery peer account
+    join-cluster                 Join a cluster
+    keys                         Program keypair commands
+    list-clusters                Lists all available clusters and their current utilization. Helps node operators
+                                 discover third-party clusters for deployment
+    localnet                     Spins up a `Localnet` cluster for testing purposes and deploys the project
+    mempool                      Fetches and prints all computations in a given mempool account
+    mempool-raw                  Fetches and prints raw mempool data
+    mxe-info                     Returns onchain information about an MXE account
+    mxe-keys                     Returns the MXE utility keys (X25519, Ed25519, ElGamal) for a given MXE
+    profile                      Profiles the arcium instructions
+    propose-fee                  Proposes computation fees for the next epoch for a given cluster
+    propose-join-cluster         Propose a node to join a cluster
+    recovery-peer-info           Returns onchain information about a recovery peer
+    requeue-mxe-keygen           Re-queues the MXE keygen computation if it has expired from the mempool. This
+                                 allows retrying the keygen if it wasn't processed in time
+    set-arx-node-metadata        Updates the metadata (IP, peer ID, location) of an existing ARX node
+    submit-aggregated-bls-key    Aggregates BLS keys from all nodes in a cluster and submits the aggregated key.
+                                 Verifies the cluster is full before submitting
+    test                         Runs tests using tests defined in Anchor.toml. Defaults to localnet; use
+                                 -c/--cluster for devnet, mainnet, or custom
+    test-cluster                 Tests a cluster by deploying a test MXE and running a computation
+    vote-fee                     Votes on fee proposals for the next epoch for a given cluster

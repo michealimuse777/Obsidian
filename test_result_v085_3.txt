@@ -1,0 +1,56 @@
+﻿node : bigint: Failed to load bindings, pure JS will 
+be used (try npm run rebuild?)
+At line:1 char:229
++ ... pair.json"; node --import tsx 
+node_modules\mocha\bin\mocha.js --timeo ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (bigint:  
+   Failed ...m run rebuild?):String) [], RemoteExcep  
+  tion
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+
+  obsidian-auction
+  LUT address: ARPRjnXnEHxQfDXqwiAQp7U93yBbWRb4N6kwTnZ3nPp1
+Initializing compute_winner computation definition...
+    1) Initializes computation definitions (skip if already done)
+  ΓÜá∩╕Å  Launch already initialized, skipping.
+  Existing mint: G9VCX9s1ASecZdDBVrJPbgo5XF6uvEs67nuMZEdJZTbq
+    Γ£ö Initializes launch with test SPL mint (skip if already done) (497ms)
+MXE x25519 pubkey: a773c936ca34c57e13c57e135642ca858d079d46aab8f9b48c5bebea69512963
+Encrypted bid amount: d36277b38b72196fd48ece7c457ef6aeb0b7078c4b145c33d71e8f0302991f5a
+Submitting encrypted bid...
+    2) Submits an encrypted bid and queues MPC computation
+Γ£à Claim test placeholder ΓÇö requires finalized launch state
+    Γ£ö Claims tokens after finalization
+
+
+  2 passing (3s)
+  2 failing
+
+  1) obsidian-auction
+       Initializes computation definitions (skip if already done):
+     Error: AnchorError caused by account: address_lookup_table. Error Code: ConstraintAddress. Error Number: 2012. Error Message: An address constraint was violated.
+Program log: Left:
+Program log: ARPRjnXnEHxQfDXqwiAQp7U93yBbWRb4N6kwTnZ3nPp1
+Program log: Right:
+Program log: na32uhgRuG1Nwg4nLcCD3A4M1DQFMttEf6j7xVypquA
+      at AnchorError.parse (node_modules\@coral-xyz\anchor\src\error.ts:168:14)
+      at translateError (node_modules\@coral-xyz\anchor\src\error.ts:277:35)
+      at MethodsBuilder.rpc (node_modules\@coral-xyz\anchor\src\program\namespace\rpc.ts:35:29)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async Context.<anonymous> (tests\obsidian.ts:93:31)
+
+  2) obsidian-auction
+       Submits an encrypted bid and queues MPC computation:
+     Error: AnchorError caused by account: comp_def_account. Error Code: AccountNotInitialized. Error Number: 3012. Error Message: The program expected this account to be already initialized.
+      at AnchorError.parse (node_modules\@coral-xyz\anchor\src\error.ts:168:14)
+      at translateError (node_modules\@coral-xyz\anchor\src\error.ts:277:35)
+      at MethodsBuilder.rpc (node_modules\@coral-xyz\anchor\src\program\namespace\rpc.ts:35:29)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async Context.<anonymous> (tests\obsidian.ts:235:27)
+
+
+

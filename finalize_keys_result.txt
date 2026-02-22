@@ -1,0 +1,2 @@
+MXE keys finalized: 5kbQJfmFH85f4bJ2jvAff6Z8kVg47KXnKu2VNMcxdnY593FYNjtv8KQVL32U8JMdhN5qjUzY1BWQDp6BvJrTxwNW
+Explorer: https://explorer.solana.com/tx/5kbQJfmFH85f4bJ2jvAff6Z8kVg47KXnKu2VNMcxdnY593FYNjtv8KQVL32U8JMdhN5qjUzY1BWQDp6BvJrTxwNW?cluster=devnet

@@ -1,0 +1,41 @@
+﻿node : bigint: Failed to load bindings, pure JS will 
+be used (try npm run rebuild?)
+At line:1 char:229
++ ... pair.json"; node --import tsx 
+node_modules\mocha\bin\mocha.js --timeo ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (bigint:  
+   Failed ...m run rebuild?):String) [], RemoteExcep  
+  tion
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+
+  obsidian-auction
+  ΓÜá∩╕Å  Comp defs already initialized, skipping.
+    Γ£ö Initializes computation definitions (skip if already done) (635ms)
+  ΓÜá∩╕Å  Launch already initialized, skipping.
+  Existing mint: G9VCX9s1ASecZdDBVrJPbgo5XF6uvEs67nuMZEdJZTbq
+    Γ£ö Initializes launch with test SPL mint (skip if already done) (489ms)
+MXE x25519 pubkey: a773c936ca34c57e13c57e135642ca858d079d46aab8f9b48c5bebea69512963
+Encrypted bid amount: f1d01fda9c8e10e1c7b68559a1417bfd6ca79059e19988e8ffa903ef8873da38
+Submitting encrypted bid...
+Bid submitted with signature: 443oSBWL7Pg3PrU8jRTPL2bJ587n7MgzC1qmgU9LyiWSuGj4j11QESdwCWWAkGykopVd7hW8CBppbbT48AXigQWD
+Waiting for MPC computation to finalize...
+    1) Submits an encrypted bid and queues MPC computation
+Γ£à Claim test placeholder ΓÇö requires finalized launch state
+    Γ£ö Claims tokens after finalization
+
+
+  3 passing (18m)
+  1 failing
+
+  1) obsidian-auction
+       Submits an encrypted bid and queues MPC computation:
+     Error: Timeout of 1000000ms exceeded. For async tests and hooks, ensure "done()" is called; if returning a Promise, ensure it resolves. (C:\Users\Zala\.gemini\antigravity\scratch\obsidian\tests\obsidian.ts)
+      at listOnTimeout (node:internal/timers:605:17)
+      at process.processTimers (node:internal/timers:541:7)
+
+
+

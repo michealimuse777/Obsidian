@@ -1,0 +1,38 @@
+﻿Wallet: 4Hs5YVKrpuCVGDkLtaADjsb6uD1doKBx64R1vWRLNMAj
+Program: CsS69vzRAZ4dJXFg68tTnP2ei4XCbYzPENdzQnBWU5Ua
+
+=== Uploading circuit: verify_bid ===
+  File: build/verify_bid.arcis (212292 bytes)
+  Γ¥î Upload error: Account does not exist or has no data 9Eg2GmQijbHvpjEjeCxHfN3gbzCCGLitqZYqg7tfepA3
+
+=== Uploading circuit: compute_winner ===
+  File: build/compute_winner.arcis (330408 bytes)
+Circuit compute_winner skipped: OnchainFinalized
+  Γ£à Circuit uploaded!
+
+=== Uploading circuit: compute_allocation ===
+  File: build/compute_allocation.arcis (3043177 bytes)
+Circuit compute_allocation skipped: OnchainFinalized
+  Γ£à Circuit uploaded!
+
+=== Finalizing: verify_bid ===
+  Γ¥î Finalize error: Simulation failed. 
+Message: Transaction simulation failed: Error processing Instruction 0: custom program error: 0xbc4. 
+Logs: 
+[
+  "Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ invoke [1]",
+  "Program log: Instruction: FinalizeComputationDefinition",
+  "Program log: AnchorError caused by a
+  Logs: Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ invoke [1]
+  Program log: Instruction: FinalizeComputationDefinition
+  Program log: AnchorError caused by account: comp_def_acc. Error Code: AccountNotInitialized. Error Number: 3012. Error Message: The program expected this account to be already initialized.
+  Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ consumed 3041 of 200000 compute units
+  Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ failed: custom program error: 0xbc4
+
+=== Finalizing: compute_winner ===
+  Γ£à Finalized! Sig: 3QnYZtCPrd51CjLLtz7LLX4fqG8j4dsfR83ZhnokZ2cZ4br1yigTiP4GA2quv6hXW5PQttpVSXMkmUg5x4zGZjhy
+
+=== Finalizing: compute_allocation ===
+  Γ£à Finalized! Sig: 4FKrF1exYzatdAmuFcWv4joen6XSiqSW9mqn1MpsUp1dD3HekrKz4jya5odSQkqxYtA5Z28s3anaQz9iE8Aghqfa
+
+Done!

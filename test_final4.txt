@@ -1,0 +1,65 @@
+﻿node : bigint: Failed to load bindings, pure JS will 
+be used (try npm run rebuild?)
+At line:1 char:229
++ ... pair.json"; node --import tsx 
+node_modules\mocha\bin\mocha.js --timeo ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (bigint:  
+   Failed ...m run rebuild?):String) [], RemoteExcep  
+  tion
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+
+  obsidian-auction
+  LUT address: na32uhgRuG1Nwg4nLcCD3A4M1DQFMttEf6j7xVypquA
+Initializing verify_bid computation definition...
+  verify_bid comp def initialized: 4Z5wHQSG3Besg581BbHewmG176kwNz5eTFV1wpkKrAnddxDtVJivMbKFbYS1jVCctNgqjB7DEYbgHr1ivwmtKZgx
+Initializing compute_allocation computation definition...
+    1) Initializes computation definitions (skip if already done)
+  ΓÜá∩╕Å  Launch already initialized, skipping.
+  Existing mint: G9VCX9s1ASecZdDBVrJPbgo5XF6uvEs67nuMZEdJZTbq
+    Γ£ö Initializes launch with test SPL mint (skip if already done) (489ms)
+MXE x25519 pubkey: a773c936ca34c57e13c57e135642ca858d079d46aab8f9b48c5bebea69512963
+Encrypted bid amount: 8083497d2e06605b3aa214defabb27b9a3feecf798f3a4c905280408fa33cd09
+Submitting encrypted bid...
+    2) Submits an encrypted bid and queues MPC computation
+Γ£à Claim test placeholder ΓÇö requires finalized launch state
+    Γ£ö Claims tokens after finalization
+
+
+  2 passing (5s)
+  2 failing
+
+  1) obsidian-auction
+       Initializes computation definitions (skip if already done):
+     Simulation failed. 
+Message: Transaction simulation failed: Error processing Instruction 0: custom program error: 0x0. 
+Logs: 
+[
+  "Program log: Instruction: InitAllocationCompDef",
+  "Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ invoke [2]",
+  "Program log: Instruction: InitComputationDefinition",
+  "Program 11111111111111111111111111111111 invoke [3]",
+  "Allocate: account Address { address: 776eenUY3cKkFqCTZmdgT3oas5CbN1ZmETHnA9FTsuB6, base: None } already in use",
+  "Program 11111111111111111111111111111111 failed: custom program error: 0x0",
+  "Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ consumed 12220 of 181292 compute units",
+  "Program Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ failed: custom program error: 0x0",
+  "Program CsS69vzRAZ4dJXFg68tTnP2ei4XCbYzPENdzQnBWU5Ua consumed 30928 of 200000 compute units",
+  "Program CsS69vzRAZ4dJXFg68tTnP2ei4XCbYzPENdzQnBWU5Ua failed: custom program error: 0x0"
+]. 
+Catch the `SendTransactionError` and call `getLogs()` on it for full details.
+  
+
+  2) obsidian-auction
+       Submits an encrypted bid and queues MPC computation:
+     Error: AnchorError thrown in programs/arcium/src/instructions/computation.rs:204. Error Code: ComputationDefinitionNotCompleted. Error Number: 6300. Error Message: Computation definition is not completed.
+      at AnchorError.parse (node_modules\@coral-xyz\anchor\src\error.ts:152:14)
+      at translateError (node_modules\@coral-xyz\anchor\src\error.ts:277:35)
+      at MethodsBuilder.rpc (node_modules\@coral-xyz\anchor\src\program\namespace\rpc.ts:35:29)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async Context.<anonymous> (tests\obsidian.ts:234:27)
+
+
+

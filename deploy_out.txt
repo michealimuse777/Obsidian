@@ -1,0 +1,24 @@
+Deploying MXE program only...
+Warning: 'anchor deploy' is deprecated. Use 'anchor program deploy' instead.
+Deploying cluster: https://api.devnet.solana.com
+Upgrade authority: /home/imuse/.config/solana/id.json
+Deploying program "obsidian"...
+Program path: /mnt/c/Users/Zala/.gemini/antigravity/scratch/obsidian/target/deploy/obsidian.so...
+Program already exists, upgrading...
+Sending upgrade transaction...
+Signature: 41osUmi33QhWqiiz38WuzyepZAwAwSVfV7SjBXEDRR9r2nmbaNTnnT5wy7X9eAek3azpZYgMdGkqweV8VFd6KY3Q
+Program ID: 8nkjktP5dWDYCkwR3fJFSuQANB1vyw5g5LTHCrxnf3CE
+Need to install the following packages:
+@solana-program/program-metadata@0.5.1
+Ok to proceed? (y) 
+
+Writing metadata account...
+ ├─ metadata: EadEmfQcGvfDdf5UGWedMSPwJC31hRYu8xTz44SmtB6L
+ ├─ program: 8nkjktP5dWDYCkwR3fJFSuQANB1vyw5g5LTHCrxnf3CE
+ └─ seed: idl
+
+[Success] Operation executed successfully
+IDL initialized.
+✓ Idl account created: 58cKKfNLKxJ2h4Rc7sg5eghSc9Ne4P9Vw7nRDmG7TZmG
+Deploy success
+MXE program deployed successfully

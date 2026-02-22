@@ -1,0 +1,40 @@
+{
+  "stats": {
+    "suites": 1,
+    "tests": 1,
+    "passes": 0,
+    "pending": 0,
+    "failures": 1,
+    "start": "2026-02-20T17:42:52.178Z",
+    "end": "2026-02-20T17:42:52.999Z",
+    "duration": 821
+  },
+  "tests": [
+    {
+      "title": "Submits an encrypted bid and queues MPC computation",
+      "fullTitle": "obsidian-auction Submits an encrypted bid and queues MPC computation",
+      "file": "C:\\Users\\Zala\\.gemini\\antigravity\\scratch\\obsidian\\tests\\obsidian.ts",
+      "duration": 814,
+      "currentRetry": 0,
+      "err": {
+        "stack": "Error: MXE public key not found\n    at Context.<anonymous> (tests\\obsidian.ts:181:34)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)",
+        "message": "MXE public key not found"
+      }
+    }
+  ],
+  "pending": [],
+  "failures": [
+    {
+      "title": "Submits an encrypted bid and queues MPC computation",
+      "fullTitle": "obsidian-auction Submits an encrypted bid and queues MPC computation",
+      "file": "C:\\Users\\Zala\\.gemini\\antigravity\\scratch\\obsidian\\tests\\obsidian.ts",
+      "duration": 814,
+      "currentRetry": 0,
+      "err": {
+        "stack": "Error: MXE public key not found\n    at Context.<anonymous> (tests\\obsidian.ts:181:34)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)",
+        "message": "MXE public key not found"
+      }
+    }
+  ],
+  "passes": []
+}

@@ -5,9 +5,10 @@ use anchor_spl::{
 };
 use arcium_anchor::prelude::*;
 
-declare_id!("6XDoHizZE4avqDJbtdM8oqZinHSVP13LpMYhuivrmdoy");
+declare_id!("CsS69vzRAZ4dJXFg68tTnP2ei4XCbYzPENdzQnBWU5Ua");
 
 // Computation definition offsets — unique IDs for each encrypted instruction
+const COMP_DEF_OFFSET_VERIFY_BID: u32 = comp_def_offset("verify_bid");
 const COMP_DEF_OFFSET_COMPUTE_WINNER: u32 = comp_def_offset("compute_winner");
 const COMP_DEF_OFFSET_COMPUTE_ALLOCATION: u32 = comp_def_offset("compute_allocation");
 
@@ -43,6 +44,12 @@ pub mod obsidian_auction {
     // STEP 2: Initialize Computation Definitions (One-Time Setup)
     // ═══════════════════════════════════════════════════════════
 
+    /// Registers the `verify_bid` encrypted instruction with Arcium.
+    pub fn init_verify_bid_comp_def(ctx: Context<InitVerifyBidCompDef>) -> Result<()> {
+        init_comp_def(ctx.accounts, None, None)?;
+        Ok(())
+    }
+
     /// Registers the `compute_winner` encrypted instruction with Arcium.
     pub fn init_winner_comp_def(ctx: Context<InitWinnerCompDef>) -> Result<()> {
         init_comp_def(ctx.accounts, None, None)?;
@@ -72,6 +79,7 @@ pub mod obsidian_auction {
         let bidder_key = ctx.accounts.bidder.key();
 
         // Build encrypted arguments for the MPC computation
+        // verify_bid circuit: Enc<Mxe, u64> — 1 nonce + 1 encrypted u64
         let args = ArgBuilder::new()
             .plaintext_u128(nonce)
             .encrypted_u64(encrypted_amount)
@@ -83,7 +91,7 @@ pub mod obsidian_auction {
             ctx.accounts,
             computation_offset,
             args,
-            vec![ComputeWinnerCallback::callback_ix(
+            vec![VerifyBidCallback::callback_ix(
                 computation_offset,
                 &ctx.accounts.mxe_account,
                 &[],
@@ -114,16 +122,16 @@ pub mod obsidian_auction {
     // STEP 4: MPC Result Callbacks (Called by Arcium Network)
     // ═══════════════════════════════════════════════════════════
 
-    #[arcium_callback(encrypted_ix = "compute_winner")]
-    pub fn compute_winner_callback(
-        ctx: Context<ComputeWinnerCallback>,
-        output: SignedComputationOutputs<ComputeWinnerOutput>,
+    #[arcium_callback(encrypted_ix = "verify_bid")]
+    pub fn verify_bid_callback(
+        ctx: Context<VerifyBidCallback>,
+        output: SignedComputationOutputs<VerifyBidOutput>,
     ) -> Result<()> {
         let result = match output.verify_output(
             &ctx.accounts.cluster_account,
             &ctx.accounts.computation_account,
         ) {
-            Ok(ComputeWinnerOutput { field_0 }) => field_0,
+            Ok(VerifyBidOutput { field_0 }) => field_0,
             Err(e) => {
                 msg!("MPC verification failed: {}", e);
                 return Err(ErrorCode::AbortedComputation.into());
@@ -290,6 +298,34 @@ pub struct InitializeLaunch<'info> {
 // --- Init Computation Definitions (Arcium One-Time Setup) ---
 // Pattern from: https://docs.arcium.com/developers/program/computation-def-accs
 
+#[init_computation_definition_accounts("verify_bid", payer)]
+#[derive(Accounts)]
+pub struct InitVerifyBidCompDef<'info> {
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    #[account(
+        mut,
+        address = derive_mxe_pda!()
+    )]
+    pub mxe_account: Box<Account<'info, MXEAccount>>,
+
+    #[account(mut)]
+    /// CHECK: comp_def_account, checked by arcium program.
+    pub comp_def_account: UncheckedAccount<'info>,
+
+    #[account(mut, address = derive_mxe_lut_pda!(mxe_account.lut_offset_slot))]
+    /// CHECK: address_lookup_table, checked by arcium program.
+    pub address_lookup_table: UncheckedAccount<'info>,
+
+    #[account(address = LUT_PROGRAM_ID)]
+    /// CHECK: lut_program is the Address Lookup Table program.
+    pub lut_program: UncheckedAccount<'info>,
+
+    pub arcium_program: Program<'info, Arcium>,
+    pub system_program: Program<'info, System>,
+}
+
 #[init_computation_definition_accounts("compute_winner", payer)]
 #[derive(Accounts)]
 pub struct InitWinnerCompDef<'info> {
@@ -349,7 +385,7 @@ pub struct InitAllocationCompDef<'info> {
 // --- Submit Encrypted Bid (Queues MPC Computation) ---
 // Pattern from: https://docs.arcium.com/developers/program
 
-#[queue_computation_accounts("compute_winner", bidder)]
+#[queue_computation_accounts("verify_bid", bidder)]
 #[derive(Accounts)]
 #[instruction(computation_offset: u64)]
 pub struct SubmitBid<'info> {
@@ -407,7 +443,7 @@ pub struct SubmitBid<'info> {
     pub computation_account: UncheckedAccount<'info>,
 
     #[account(
-        address = derive_comp_def_pda!(COMP_DEF_OFFSET_COMPUTE_WINNER)
+        address = derive_comp_def_pda!(COMP_DEF_OFFSET_VERIFY_BID)
     )]
     pub comp_def_account: Box<Account<'info, ComputationDefinitionAccount>>,
 
@@ -436,13 +472,13 @@ pub struct SubmitBid<'info> {
 // --- MPC Callback Account Structs ---
 // Pattern from: https://docs.arcium.com/developers/program/callback-accs
 
-#[callback_accounts("compute_winner")]
+#[callback_accounts("verify_bid")]
 #[derive(Accounts)]
-pub struct ComputeWinnerCallback<'info> {
+pub struct VerifyBidCallback<'info> {
     pub arcium_program: Program<'info, Arcium>,
 
     #[account(
-        address = derive_comp_def_pda!(COMP_DEF_OFFSET_COMPUTE_WINNER)
+        address = derive_comp_def_pda!(COMP_DEF_OFFSET_VERIFY_BID)
     )]
     pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
 

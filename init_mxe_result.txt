@@ -1,0 +1,3 @@
+Initializing MXE account only...
+MXE account initialized: 5Ei3VwqHmsvEV6Ux9Yrx6thQvjqbNxbCGqcDeHbCKGR4ak2LHUBwqcs31ZFpo2vm9hwLwuip6eeoBkaUt3QQbepF
+Explorer: https://explorer.solana.com/tx/5Ei3VwqHmsvEV6Ux9Yrx6thQvjqbNxbCGqcDeHbCKGR4ak2LHUBwqcs31ZFpo2vm9hwLwuip6eeoBkaUt3QQbepF?cluster=devnet

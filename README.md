@@ -1,16 +1,16 @@
 
 # Obsidian | The Dark Launchpad
 
-**Privacy-Preserving Blind Auction on Solana powered by Arcium v0.8.4 Confidential Computing.**
+**Privacy-Preserving Blind Auction on Solana powered by Arcium v0.8.5 Confidential Computing.**
 
 [![Solana Devnet](https://img.shields.io/badge/Solana-Devnet-9945FF?style=flat-square&logo=solana)](https://solana.com)
-[![Arcium v0.8.4](https://img.shields.io/badge/Arcium-v0.8.4-6AE3FF?style=flat-square)](https://arcium.com)
+[![Arcium v0.8.5](https://img.shields.io/badge/Arcium-v0.8.5-6AE3FF?style=flat-square)](https://arcium.com)
 
 ---
 
 ## Trust Model
 
-> **Obsidian integrates Arcium v0.8.4 to execute blind auction allocation logic via decentralized Multi-Party Computation (MPC). All bids are encrypted client-side using Arcium's x25519 + RescueCipher, never decrypted on-chain, and never visible to protocol operators. Only final auction results are committed to Solana. No single MPC node can learn individual bid values.**
+> **Obsidian integrates Arcium v0.8.5 to execute blind auction allocation logic via decentralized Multi-Party Computation (MPC). All bids are encrypted client-side using Arcium's x25519 + RescueCipher, never decrypted on-chain, and never visible to protocol operators. Only final auction results are committed to Solana. No single MPC node can learn individual bid values.**
 
 ---
 
@@ -81,7 +81,7 @@ obsidian/
 - **Anchor 0.30.1** — Rust smart contract framework
 - **SPL Token / Token-2022** — Standardized token operations
 
-### Arcium Confidential Computing (v0.8.4)
+### Arcium Confidential Computing (v0.8.5)
 - **arcium-anchor** — Anchor integration (`#[arcium_program]`, `queue_computation`, `#[arcium_callback]`)
 - **arcium-macros** — `comp_def_offset` and callback macros
 - **arcium-client** — On-chain account derivation and transaction building
@@ -137,11 +137,11 @@ All inputs use `Enc<Mxe, T>` — only the MXE can decrypt. Individual bidders ne
 
 ## Deployment
 
-- **Program ID:** `6XDoHizZE4avqDJbtdM8oqZinHSVP13LpMYhuivrmdoy`
+- **Program ID:** `CsS69vzRAZ4dJXFg68tTnP2ei4XCbYzPENdzQnBWU5Ua`
 - **Network:** Solana Devnet
-- **MXE Account:** `2f76rcSC8yxxwcaumrh38t38tYk3ZGqJaRznQphwrj8o`
+- **MXE Account:** `CgWuDfFvm4729GuvwJB26jPd17MhWWjfjKzrEjQMmStv`
 - **Cluster Offset:** 456
-- **Build:** `arcium build` (requires Arcium CLI via `arcup`)
+- **Build:** `arcium build` (requires Arcium CLI v0.8.5 via `arcup`)
 - **Test:** `node --import tsx node_modules/mocha/bin/mocha.js --timeout 1000000 tests/obsidian.ts`
 - **Deploy:** `solana program deploy target/deploy/obsidian.so --program-id target/deploy/obsidian-keypair.json -u devnet`
 
@@ -158,7 +158,7 @@ All inputs use `Enc<Mxe, T>` — only the MXE can decrypt. Individual bidders ne
 
 ## Checklist
 
-- [x] Arcium v0.8.4 everywhere
+- [x] Arcium v0.8.5 everywhere
 - [x] `#[arcium_program]` macro
 - [x] `queue_computation` / `init_comp_def` / `#[arcium_callback]`
 - [x] Encrypted logic in `encrypted-ixs/` (Arcis)

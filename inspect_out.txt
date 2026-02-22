@@ -1,0 +1,44 @@
+Wallet: 4Hs5YVKrpuCVGDkLtaADjsb6uD1doKBx64R1vWRLNMAj
+Arcium Program: Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ
+
+=== compute_winner ===
+  Address: AmjW77FV8gc84TSbmQ9c5Jr4ph63WQbtJSvjCgsX15ow
+  Offset: 3303274052
+  Circuit state: "Offchain"
+  Account data length: 105 bytes
+  Owner: Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ
+  Discriminator: f5b0d9ddfd68acc8
+  Data preview (hex): 00e29bb00d00000000a80a05000400000005060506020000000506010030e4fa3b55d65650a5040fd3b0f9401a260d31e59315b5a403f64b1ed425633cfe00000000000000000000
+
+=== compute_allocation ===
+  Address: HCX5zxFYNybdiFh9kxwH2Cjx2cRFSrD2qcJVYgjWzLYF
+  Offset: 4200900232
+  Circuit state: "Offchain"
+  Account data length: 105 bytes
+  Owner: Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ
+  Discriminator: f5b0d9ddfd68acc8
+  Data preview (hex): 004258876700000000696f2e000400000005060506020000000506010030e4fa3b55d65650a5040fd3b0f9401a260d31e59315b5a403f64b1ed425633cfe00000000000000000000
+
+
+=== uploadCircuit function ===
+Params: 4
+Source (first 1000 chars): async function uploadCircuit(provider, circuitName, mxeProgramId, rawCircuit, logging = true, chunkSize = 500, confirmOptions) {
+    const compDefAccInfo = getCompDefAccInfo(circuitName, mxeProgramId);
+    const program = getArciumProgram(provider);
+    const compDefAcc = await program.account.computationDefinitionAccount.fetch(compDefAccInfo.pubkey);
+    // Type assertion at boundary where Anchor's fetch() returns the account data
+    const state = getCircuitState(compDefAcc.circuitSource);
+    if (state !== 'OnchainPending') {
+        optionalLog(logging, `Circuit ${circuitName} skipped: ${state}`);
+        return [];
+    }
+    // 9 = 8-byte discriminator + 1-byte bump for ComputationDefinitionRaw account
+    const numAccs = Math.ceil(rawCircuit.length / (MAX_ACCOUNT_SIZE - 9));
+    const sigs = [];
+    const uploadPromises = [];
+    for (let i = 0; i < numAccs; i++) {
+        uploadPromises.push(uploadToCircuitAcc(provider, program, rawCircuit.subarray(i * (MAX_ACCOUNT_SIZE - 9), (i
+
+
+=== Compiled circuit files ===
+  Dir not found: ENOENT: no such file or directory, scandir '/mnt/c/Users/Zala/.gemini/antigravity/scratch/obsidian/e
