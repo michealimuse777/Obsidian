@@ -1,32 +1,35 @@
 @import "tailwindcss";
 
 :root {
-  /* Arcium Encrypted Enclave Palette - High Visibility Dark Mode */
+  /* ═══ OBSIDIAN DESIGN SYSTEM ═══ */
 
-  /* Background: Deep charcoal/midnight gradient base */
-  --background: #0B0E17;
-  --background-alt: #120A1F;
+  /* Background: OLED-deep blacks with volcanic undertones */
+  --background: #050508;
+  --background-alt: #0A0710;
+  --background-card: #08060E;
 
   /* Text: High contrast with lavender undertones */
   --foreground: #F0ECF8;
-  --foreground-muted: #C2A8FF;
+  --foreground-muted: #9888B8;
+  --foreground-dim: #6A5A8A;
 
-  /* Primary Accent: Luminous Electric Purple */
+  /* Primary: Dual-tone indigo → electric violet */
   --accent-purple: #9B6CFF;
-  --accent-purple-bright: #B08DFF;
+  --accent-purple-deep: #6B3FA0;
+  --accent-purple-bright: #C4A0FF;
   --accent-glow: rgba(155, 108, 255, 0.25);
 
-  /* Secondary Glow: Soft Halo */
+  /* Secondary: Cyan signal highlight */
+  --accent-signal: #6AE3FF;
+  --accent-signal-glow: rgba(106, 227, 255, 0.12);
+
+  /* Halo */
   --accent-halo: #C2A8FF;
 
-  /* Highlight: Encrypted/ZK Signal Hints (Cyan) */
-  --accent-signal: #6AE3FF;
-  --accent-signal-glow: rgba(106, 227, 255, 0.15);
-
-  /* Card & Glassmorphism */
-  --card-bg: rgba(18, 10, 31, 0.75);
-  --card-border: rgba(155, 108, 255, 0.12);
-  --card-border-hover: rgba(155, 108, 255, 0.25);
+  /* Card / Glass */
+  --card-bg: rgba(8, 6, 14, 0.85);
+  --card-border: rgba(155, 108, 255, 0.08);
+  --card-border-hover: rgba(155, 108, 255, 0.22);
 
   /* Fonts */
   --font-inter: var(--font-inter);
@@ -52,84 +55,254 @@
   --font-mono: var(--font-mono);
 }
 
-/* === ARCIUM ENCRYPTED AESTHETIC === */
+/* ═══════════════════════════════════════════════════ */
+/* OBSIDIAN SIGNATURE — Fractured Glass & Angular     */
+/* ═══════════════════════════════════════════════════ */
 
-/* Radial glow behind hero sections */
+/* Obsidian fractured glass noise texture overlay */
+.obsidian-noise {
+  position: relative;
+}
+
+.obsidian-noise::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: overlay;
+}
+
+/* Angular accent lines — obsidian shard edges */
+.obsidian-shard {
+  position: relative;
+}
+
+.obsidian-shard::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-purple), transparent);
+  opacity: 0.3;
+}
+
+/* ═══════════════════════════════════════════════════ */
+/* DUAL-TONE RADIAL BACKGROUNDS                       */
+/* ═══════════════════════════════════════════════════ */
+
 .arcium-radial {
   background:
-    radial-gradient(ellipse 80% 60% at 30% 20%, rgba(155, 108, 255, 0.18) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 80% 80%, rgba(106, 227, 255, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 70% 50% at 25% 15%, rgba(107, 63, 160, 0.2) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 75% 75%, rgba(106, 227, 255, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(155, 108, 255, 0.08) 0%, transparent 50%),
     linear-gradient(to bottom, var(--background) 0%, var(--background-alt) 100%);
 }
 
-/* Legacy support */
 .obsidian-radial {
-  background: radial-gradient(circle at 50% 0%, rgba(155, 108, 255, 0.2) 0%, transparent 70%);
+  background: radial-gradient(circle at 50% 0%, rgba(107, 63, 160, 0.15) 0%, transparent 70%);
 }
 
-/* Luminous text glow */
+/* ═══════════════════════════════════════════════════ */
+/* TYPOGRAPHY SYSTEM                                   */
+/* ═══════════════════════════════════════════════════ */
+
+/* Luminous headline glow — more refined */
 .text-glow {
   text-shadow:
-    0 0 20px rgba(155, 108, 255, 0.6),
-    0 0 40px rgba(155, 108, 255, 0.3),
+    0 0 30px rgba(155, 108, 255, 0.4),
     0 0 60px rgba(155, 108, 255, 0.15);
 }
 
-/* ZK Signal glow (cyan accent) */
+/* Cyan accent glow */
 .text-glow-signal {
   text-shadow:
     0 0 15px rgba(106, 227, 255, 0.5),
-    0 0 30px rgba(106, 227, 255, 0.25);
+    0 0 30px rgba(106, 227, 255, 0.2);
+}
+
+/* Volcanic Obsidian Glass — carved, matte, cold */
+.text-volcanic-glass {
+  background: linear-gradient(135deg,
+      #4a3d5a 0%,
+      #6a5878 15%,
+      #3a3045 30%,
+      #7a6a8d 45%,
+      #4a3d5a 55%,
+      #3a3045 70%,
+      #5a4d6a 85%,
+      #4a3d5a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  position: relative;
+  filter: contrast(1.1) brightness(1.4);
+}
+
+.text-volcanic-glass::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg,
+      transparent 0%,
+      transparent 35%,
+      rgba(155, 108, 255, 0.08) 42%,
+      rgba(200, 180, 240, 0.12) 45%,
+      rgba(155, 108, 255, 0.06) 48%,
+      transparent 55%,
+      transparent 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  pointer-events: none;
+}
+
+/* Frosted Chrome — cold metallic shimmer */
+.text-frosted-chrome {
+  background: linear-gradient(120deg,
+      #8a8a9a 0%,
+      #c8c0d8 20%,
+      #f0eef5 40%,
+      #d0c8e0 55%,
+      #9090a5 75%,
+      #c8c0d8 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: chrome-shift 8s ease-in-out infinite;
+}
+
+@keyframes chrome-shift {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
 /* Cryptographic mono styling */
 .font-crypto {
   font-family: var(--font-mono);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   font-weight: 500;
 }
 
 /* Enclave muted text */
 .text-enclave-muted {
   color: var(--foreground-muted);
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
 }
 
-/* Premium glass panel */
+/* ═══════════════════════════════════════════════════ */
+/* GLASS PANEL — Premium Depth                         */
+/* ═══════════════════════════════════════════════════ */
+
 .glass-panel {
   background: var(--card-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
   border: 1px solid var(--card-border);
   box-shadow:
-    0 8px 40px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(155, 108, 255, 0.05) inset,
-    0 0 60px -10px rgba(155, 108, 255, 0.15);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    0 8px 48px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(155, 108, 255, 0.04) inset,
+    0 1px 0 0 rgba(255, 255, 255, 0.03) inset,
+    0 0 80px -20px rgba(155, 108, 255, 0.1);
+  transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease;
 }
 
 .glass-panel:hover {
   border-color: var(--card-border-hover);
   box-shadow:
-    0 12px 48px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(155, 108, 255, 0.1) inset,
-    0 0 80px -10px rgba(155, 108, 255, 0.25);
+    0 16px 64px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(155, 108, 255, 0.08) inset,
+    0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
+    0 0 100px -20px rgba(155, 108, 255, 0.2);
+  transform: translateY(-2px);
 }
 
-/* Encrypted badge/pill styling */
-.badge-encrypted {
-  background: rgba(155, 108, 255, 0.1);
-  border: 1px solid rgba(155, 108, 255, 0.3);
-  color: var(--accent-purple-bright);
-  font-family: var(--font-mono);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  font-size: 10px;
-  padding: 6px 12px;
-  border-radius: 4px;
+/* ═══════════════════════════════════════════════════ */
+/* MICRO-INTERACTIONS                                  */
+/* ═══════════════════════════════════════════════════ */
+
+/* Button hover light sweep */
+.btn-sweep {
+  position: relative;
+  overflow: hidden;
 }
 
-/* Signal pulse animation */
+.btn-sweep::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+  transition: left 0.6s ease;
+  pointer-events: none;
+}
+
+.btn-sweep:hover::before {
+  left: 100%;
+}
+
+/* Card lift on hover */
+.card-lift {
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease;
+}
+
+.card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(155, 108, 255, 0.1);
+}
+
+/* Smooth fade-in utility */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Status pulse ring */
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(155, 108, 255, 0.4);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(155, 108, 255, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(155, 108, 255, 0);
+  }
+}
+
+.pulse-ring {
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+/* Signal pulse */
 @keyframes signal-pulse {
 
   0%,
@@ -140,7 +313,7 @@
 
   50% {
     opacity: 1;
-    transform: scale(1.1);
+    transform: scale(1.15);
   }
 }
 
@@ -157,29 +330,56 @@
   box-shadow: 0 0 8px var(--accent-purple), 0 0 16px rgba(155, 108, 255, 0.4);
 }
 
-/* CTA Button with glow */
+/* ═══════════════════════════════════════════════════ */
+/* BADGE / PILL SYSTEM — Consistent Components         */
+/* ═══════════════════════════════════════════════════ */
+
+.badge-encrypted {
+  background: rgba(155, 108, 255, 0.08);
+  border: 1px solid rgba(155, 108, 255, 0.2);
+  color: var(--accent-purple-bright);
+  font-family: var(--font-mono);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-size: 10px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  box-shadow: 0 0 20px -4px rgba(155, 108, 255, 0.1) inset;
+  transition: all 0.3s ease;
+}
+
+.badge-encrypted:hover {
+  background: rgba(155, 108, 255, 0.12);
+  border-color: rgba(155, 108, 255, 0.35);
+  box-shadow: 0 0 20px -4px rgba(155, 108, 255, 0.2) inset;
+}
+
+/* CTA Button with premium glow */
 .btn-arcium {
-  background: linear-gradient(135deg, var(--accent-purple) 0%, #7C4DFF 100%);
+  background: linear-gradient(135deg, var(--accent-purple-deep) 0%, var(--accent-purple) 50%, #7C4DFF 100%);
   color: white;
   font-weight: 600;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   padding: 14px 32px;
-  border-radius: 8px;
-  border: none;
+  border-radius: 10px;
+  border: 1px solid rgba(155, 108, 255, 0.3);
   box-shadow:
-    0 4px 20px rgba(155, 108, 255, 0.4),
-    0 0 40px rgba(155, 108, 255, 0.2);
-  transition: all 0.3s ease;
+    0 4px 24px rgba(155, 108, 255, 0.3),
+    0 0 60px rgba(155, 108, 255, 0.15);
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .btn-arcium:hover {
   transform: translateY(-2px);
   box-shadow:
-    0 6px 30px rgba(155, 108, 255, 0.5),
-    0 0 60px rgba(155, 108, 255, 0.3);
+    0 8px 36px rgba(155, 108, 255, 0.45),
+    0 0 80px rgba(155, 108, 255, 0.25);
 }
 
-/* Remove number input spinners */
+/* ═══════════════════════════════════════════════════ */
+/* INPUT / SPINNER / BODY                              */
+/* ═══════════════════════════════════════════════════ */
+
 .no-spinner::-webkit-inner-spin-button,
 .no-spinner::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -191,17 +391,16 @@
   appearance: textfield;
 }
 
-/* Body base */
 body {
-  background: linear-gradient(180deg, var(--background) 0%, var(--background-alt) 100%);
+  background: var(--background);
   color: var(--foreground);
   overflow-x: hidden;
   min-height: 100vh;
 }
 
-/* Scrollbar styling */
+/* Scrollbar — minimal obsidian */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -209,10 +408,16 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(155, 108, 255, 0.3);
-  border-radius: 4px;
+  background: rgba(155, 108, 255, 0.2);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(155, 108, 255, 0.5);
+  background: rgba(155, 108, 255, 0.4);
+}
+
+/* Selection */
+::selection {
+  background: rgba(155, 108, 255, 0.3);
+  color: white;
 }

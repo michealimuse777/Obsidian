@@ -409,51 +409,70 @@ export default function BidForm() {
         const hasAllocation = (bidData.allocation || 0) > 0;
         const canClaim = isAuctionFinalized && hasAllocation && !bidData.isClaimed;
         const displayAllocation = bidData.allocation && bidData.allocation > 0 ? bidData.allocation : 0;
+        const isPending = !isAuctionFinalized && !bidData.isClaimed;
 
         return (
             <div className="w-full max-w-sm mx-auto p-1 relative z-10">
-                <div className="absolute -inset-10 bg-accent-purple/20 blur-[100px] rounded-full pointer-events-none opacity-40"></div>
+                <div className="absolute -inset-12 rounded-full pointer-events-none opacity-30"
+                    style={{ background: 'radial-gradient(circle, rgba(107, 63, 160, 0.3) 0%, rgba(106, 227, 255, 0.05) 50%, transparent 70%)' }} />
 
-                <div className="glass-panel rounded-2xl p-8 shadow-2xl text-center space-y-6 relative overflow-hidden">
+                <div className="glass-panel rounded-2xl p-8 shadow-2xl text-center space-y-6 relative overflow-hidden obsidian-noise">
+                    {/* Angular shard accent */}
+                    <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#9B6CFF]/30 to-transparent" />
 
-                    {/* Status Icon */}
-                    <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ring-1 shadow-[0_0_40px_rgba(0,0,0,0.3)] ${bidData.isClaimed
-                        ? 'bg-green-500/10 ring-green-500/40 shadow-[0_0_20px_rgba(34,197,94,0.2)]'
-                        : hasAllocation
-                            ? 'bg-accent-purple/10 ring-accent-purple/40 shadow-[0_0_25px_rgba(168,85,247,0.3)]'
-                            : 'bg-white/5 ring-white/10'
-                        }`}>
+                    {/* Status Icon with pulse ring */}
+                    <motion.div
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ type: "spring", stiffness: 200 }}
+                        className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ring-1 ${isPending ? 'pulse-ring' : ''} ${bidData.isClaimed
+                            ? 'bg-green-500/10 ring-green-500/30 shadow-[0_0_30px_rgba(34,197,94,0.15)]'
+                            : hasAllocation
+                                ? 'bg-[#6B3FA0]/15 ring-[#9B6CFF]/30 shadow-[0_0_30px_rgba(107,63,160,0.2)]'
+                                : 'bg-white/[0.03] ring-white/8 shadow-[0_0_40px_rgba(0,0,0,0.3)]'
+                            }`}>
                         {bidData.isClaimed ? (
                             <CheckCircle className="w-10 h-10 text-green-400" />
                         ) : hasAllocation ? (
                             <span className="text-3xl">🎉</span>
                         ) : (
-                            <Lock className="w-8 h-8 text-purple-200/50" />
+                            <Lock className="w-8 h-8 text-[#9B6CFF]/40" />
                         )}
-                    </div>
+                    </motion.div>
 
                     {/* Title */}
-                    <div>
-                        <h3 className="text-2xl font-display text-white mb-2 tracking-tight">
+                    <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.15 }}
+                    >
+                        <h3 className="text-2xl font-display font-bold text-white mb-2 tracking-[-0.02em]">
                             {bidData.isClaimed ? 'Tokens Claimed!' : hasAllocation ? 'You Won!' : 'Bid Registered'}
                         </h3>
-                        <p className="text-sm font-mono text-purple-200/70 uppercase tracking-widest">
+                        <p className="text-xs font-mono text-[#9888B8] uppercase tracking-[0.2em]">
                             {isAuctionFinalized
                                 ? (bidData.isClaimed ? 'Claimed Successfully' : 'Auction Complete')
                                 : 'MPC Processing...'}
                         </p>
-                    </div>
+                    </motion.div>
 
                     {/* Details Card */}
-                    <div className="p-5 rounded-xl bg-black/20 border border-white/5 space-y-4 text-left shadow-inner">
+                    <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.25 }}
+                        className="p-5 rounded-xl bg-black/30 border border-white/[0.04] space-y-4 text-left relative"
+                    >
+                        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+
                         {bidData.txHash && bidData.txHash !== "Registered" && bidData.txHash !== "Verified" && (
                             <div className="flex justify-between items-center text-sm">
-                                <span className="text-purple-200/60 font-mono">Transaction</span>
+                                <span className="text-[#6A5A8A] font-mono text-xs">Transaction</span>
                                 <a
                                     href={getExplorerUrl(bidData.txHash)}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-cyan-400 font-mono text-xs flex items-center gap-1.5 hover:text-cyan-300 transition-colors"
+                                    className="text-[#6AE3FF]/70 font-mono text-xs flex items-center gap-1.5 hover:text-[#6AE3FF] transition-colors duration-300"
                                 >
                                     {bidData.txHash.slice(0, 8)}...{bidData.txHash.slice(-4)}
                                     <ExternalLink className="w-3 h-3" />
@@ -462,54 +481,57 @@ export default function BidForm() {
                         )}
 
                         <div className="flex justify-between items-center text-sm">
-                            <span className="text-purple-200/60 font-mono">Bid Amount</span>
-                            <span className="text-accent-purple font-mono flex items-center gap-2 font-bold">
-                                <Lock className="w-3.5 h-3.5" /> Encrypted (Arcium MPC)
+                            <span className="text-[#6A5A8A] font-mono text-xs">Bid Amount</span>
+                            <span className="text-[#C4A0FF] font-mono flex items-center gap-2 text-xs font-semibold">
+                                <Lock className="w-3 h-3" /> Encrypted (Arcium MPC)
                             </span>
                         </div>
 
                         {bidData.isProcessed && (
                             <div className="flex justify-between items-center text-sm">
-                                <span className="text-purple-200/60 font-mono">Allocation</span>
-                                <span className={`font-mono font-bold text-lg ${hasAllocation ? 'text-green-400' : 'text-purple-200/50'}`}>
+                                <span className="text-[#6A5A8A] font-mono text-xs">Allocation</span>
+                                <span className={`font-mono font-bold text-base ${hasAllocation ? 'text-green-400' : 'text-[#6A5A8A]'}`}>
                                     {hasAllocation ? `${displayAllocation.toLocaleString()} OBS` : 'Pending...'}
                                 </span>
                             </div>
                         )}
 
                         <div className="flex justify-between items-center text-sm">
-                            <span className="text-purple-200/60 font-mono">Privacy</span>
-                            <span className="font-mono text-xs px-2.5 py-1 rounded-md font-bold tracking-wide bg-cyan-500/20 text-cyan-300">
+                            <span className="text-[#6A5A8A] font-mono text-xs">Privacy</span>
+                            <span className="font-mono text-[10px] px-2.5 py-1 rounded-md font-semibold tracking-widest bg-[#6AE3FF]/8 text-[#6AE3FF]/80 border border-[#6AE3FF]/10">
                                 ARCIUM MPC
                             </span>
                         </div>
 
                         <div className="flex justify-between items-center text-sm">
-                            <span className="text-purple-200/60 font-mono">Status</span>
-                            <span className={`font-mono text-xs px-2.5 py-1 rounded-md font-bold tracking-wide ${bidData.isClaimed
-                                ? 'bg-green-500/20 text-green-300'
+                            <span className="text-[#6A5A8A] font-mono text-xs">Status</span>
+                            <span className={`font-mono text-[10px] px-2.5 py-1 rounded-md font-semibold tracking-widest ${bidData.isClaimed
+                                ? 'bg-green-500/10 text-green-400/80 border border-green-500/15'
                                 : isAuctionFinalized
-                                    ? 'bg-accent-purple/20 text-accent-purple'
-                                    : 'bg-yellow-500/10 text-yellow-300'
+                                    ? 'bg-[#9B6CFF]/10 text-[#C4A0FF] border border-[#9B6CFF]/15'
+                                    : 'bg-yellow-500/8 text-yellow-300/80 border border-yellow-500/10'
                                 }`}>
                                 {bidData.isClaimed ? 'CLAIMED' : isAuctionFinalized ? 'READY' : 'PENDING'}
                             </span>
                         </div>
-                    </div>
+                    </motion.div>
 
                     {/* Claim Button */}
                     {canClaim && (
-                        <button
+                        <motion.button
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.35 }}
                             onClick={handleClaim}
                             disabled={status === 'submitting'}
-                            className="w-full py-4 rounded-xl font-mono text-sm font-bold tracking-widest uppercase bg-gradient-to-r from-accent-purple to-purple-600 text-white hover:opacity-90 hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                            className="btn-sweep w-full py-4 rounded-xl font-mono text-xs font-bold tracking-[0.2em] uppercase bg-gradient-to-r from-[#6B3FA0] to-[#9B6CFF] text-white hover:shadow-[0_0_30px_rgba(107,63,160,0.3)] transition-all duration-400 disabled:opacity-50 flex items-center justify-center gap-2 border border-[#9B6CFF]/20"
                         >
                             {status === 'submitting' ? (
                                 <><Loader2 className="w-4 h-4 animate-spin" /> Claiming...</>
                             ) : (
                                 <>🎁 Claim {displayAllocation.toLocaleString()} Tokens</>
                             )}
-                        </button>
+                        </motion.button>
                     )}
 
                     {!isAuctionFinalized && (
@@ -529,7 +551,7 @@ export default function BidForm() {
                         Close View
                     </button>
                 </div>
-            </div>
+            </div >
         );
     }
 
@@ -538,9 +560,9 @@ export default function BidForm() {
     // ═══════════════════════════════════════════════════════════
     const formElements = (
         <>
-            <h3 className="text-sm font-mono tracking-widest text-purple-200/60 mb-8 flex items-center justify-between uppercase">
+            <h3 className="text-[10px] font-mono tracking-[0.25em] text-[#9888B8]/60 mb-8 flex items-center justify-between uppercase">
                 <span>{hasBid ? 'Existing Bid Found' : 'Confidential Input'}</span>
-                <span className={`w-2 h-2 rounded-full shadow-[0_0_12px_rgba(34,197,94,0.6)] ${hasBid ? 'bg-accent-purple' : 'bg-green-500'}`}></span>
+                <span className={`w-2 h-2 rounded-full ${hasBid ? 'bg-[#9B6CFF] shadow-[0_0_12px_rgba(155,108,255,0.6)]' : 'bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.6)]'}`}></span>
             </h3>
 
             <form onSubmit={hasBid ? (e) => { e.preventDefault(); handleViewBid(); } : handleSubmit} className="space-y-8">
@@ -552,29 +574,29 @@ export default function BidForm() {
                             onChange={(e) => { setAmount(e.target.value); if (status === 'success') setStatus('idle'); }}
                             placeholder={hasBid ? "Bid Placed" : "0.00"}
                             disabled={status === 'encrypting' || status === 'submitting' || status === 'computing' || hasBid}
-                            className={`w-full bg-transparent border-b border-purple-200/10 py-5 px-2 text-5xl font-display text-white focus:outline-none focus:border-accent-purple/50 transition-all placeholder:text-purple-200/10 no-spinner tracking-tight ${hasBid ? 'opacity-50 cursor-not-allowed text-center placeholder:text-accent-purple/60' : ''}`}
+                            className={`w-full bg-transparent border-b border-white/[0.06] py-5 px-2 text-5xl font-display font-bold text-white focus:outline-none focus:border-[#9B6CFF]/40 transition-all duration-300 placeholder:text-white/[0.06] no-spinner tracking-[-0.02em] ${hasBid ? 'opacity-50 cursor-not-allowed text-center placeholder:text-[#9B6CFF]/40' : ''}`}
                         />
-                        {!hasBid && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-mono text-purple-200/30 tracking-widest pointer-events-none group-focus-within:text-accent-purple transition-colors">USDC</span>}
+                        {!hasBid && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-mono text-[#6A5A8A]/50 tracking-[0.2em] pointer-events-none group-focus-within:text-[#9B6CFF]/60 transition-colors duration-300">USDC</span>}
 
-                        <div className="absolute inset-0 -z-10 bg-accent-purple/5 opacity-0 group-focus-within:opacity-100 blur-2xl transition-opacity duration-500 rounded-lg"></div>
+                        <div className="absolute inset-0 -z-10 bg-[#6B3FA0]/5 opacity-0 group-focus-within:opacity-100 blur-2xl transition-opacity duration-500 rounded-lg"></div>
                     </div>
                 </div>
 
                 {!publicKey ? (
-                    <div className="p-5 rounded-lg border border-yellow-500/20 bg-yellow-500/5 text-yellow-200/70 text-sm font-mono text-center shadow-[0_0_20px_rgba(234,179,8,0.05)]">
-                        <Wallet className="w-5 h-5 mx-auto mb-2 opacity-80" />
-                        Please connect wallet to bid
+                    <div className="p-5 rounded-xl border border-yellow-500/10 bg-yellow-500/[0.03] text-yellow-300/60 text-xs font-mono text-center">
+                        <Wallet className="w-5 h-5 mx-auto mb-2 opacity-60" />
+                        Connect wallet to bid
                     </div>
                 ) : (
                     <button
                         type="submit"
                         disabled={status === 'encrypting' || status === 'submitting' || status === 'computing' || (!amount && !hasBid)}
-                        className={`w-full py-4 rounded-lg font-mono text-xs font-bold tracking-[0.2em] uppercase flex items-center justify-center gap-3 transition-all relative overflow-hidden shadow-lg
-                        ${hasBid ? 'bg-accent-purple/15 text-accent-purple border border-accent-purple/30 hover:bg-accent-purple/25 hover:shadow-[0_0_20px_rgba(168,85,247,0.2)]' :
-                                status === 'success' ? 'bg-green-500/15 text-green-400 border border-green-500/30 hover:bg-green-500/25' :
-                                    status === 'error' ? 'bg-red-500/15 text-red-400 border border-red-500/30' :
-                                        'bg-white/5 hover:bg-white/10 border border-white/10 text-white/90 hover:text-white hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]'}
-                        disabled:opacity-50 disabled:cursor-not-allowed
+                        className={`btn-sweep w-full py-4 rounded-xl font-mono text-[10px] font-bold tracking-[0.2em] uppercase flex items-center justify-center gap-3 transition-all duration-400 relative overflow-hidden
+                        ${hasBid ? 'bg-[#9B6CFF]/8 text-[#C4A0FF] border border-[#9B6CFF]/20 hover:bg-[#9B6CFF]/12 hover:shadow-[0_0_20px_rgba(155,108,255,0.15)]' :
+                                status === 'success' ? 'bg-green-500/8 text-green-400/80 border border-green-500/15 hover:bg-green-500/12' :
+                                    status === 'error' ? 'bg-red-500/8 text-red-400/80 border border-red-500/15' :
+                                        'bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] text-white/80 hover:text-white hover:border-white/10 hover:shadow-[0_0_30px_rgba(255,255,255,0.04)]'}
+                        disabled:opacity-40 disabled:cursor-not-allowed
                         `}
                     >
                         {hasBid ? (
@@ -630,9 +652,11 @@ export default function BidForm() {
     return (
         <>
             <div className="hidden md:block w-full max-w-sm mx-auto p-1 relative z-10">
-                <div className="absolute -inset-1 z-[-1] bg-gradient-to-b from-accent-purple/20 to-transparent blur-3xl opacity-30 rounded-full"></div>
+                <div className="absolute -inset-2 z-[-1] rounded-full opacity-20 pointer-events-none"
+                    style={{ background: 'radial-gradient(circle, rgba(107, 63, 160, 0.3) 0%, rgba(106, 227, 255, 0.05) 50%, transparent 70%)' }} />
 
-                <div className="glass-panel rounded-2xl p-10 relative overflow-hidden shadow-2xl border border-white/10">
+                <div className="glass-panel rounded-2xl p-10 relative overflow-hidden shadow-2xl obsidian-noise">
+                    <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#9B6CFF]/20 to-transparent" />
                     {formElements}
                 </div>
             </div>
