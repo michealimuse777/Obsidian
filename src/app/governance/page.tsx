@@ -1,125 +1,114 @@
 'use client';
 
-import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Vote, CheckCircle, XCircle, Clock, ShieldCheck, Users } from 'lucide-react';
-import { toast } from 'sonner';
+import { ShieldCheck, Lock, ArrowLeft, Cpu, Zap, Users, Vote } from 'lucide-react';
+import Link from 'next/link';
 
 export default function GovernancePage() {
-    const [hasVoted, setHasVoted] = useState(false);
-
-    const handleVote = (vote: 'yes' | 'no') => {
-        toast.promise(
-            new Promise(resolve => setTimeout(resolve, 2000)),
-            {
-                loading: 'Signing Vote Transaction...',
-                success: () => {
-                    setHasVoted(true);
-                    return `Vote Cast: ${vote === 'yes' ? 'Approve' : 'Reject'}`;
-                },
-                error: 'Failed to cast vote',
-            }
-        );
-    };
-
     return (
         <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] font-sans relative overflow-hidden">
             {/* Background Ambience */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-accent-purple/10 blur-[120px] rounded-full pointer-events-none opacity-50"></div>
+            <div className="absolute bottom-0 right-1/4 w-[600px] h-[400px] bg-[#6AE3FF]/5 blur-[100px] rounded-full pointer-events-none opacity-30"></div>
 
-            <main className="container mx-auto px-6 py-24 relative z-10">
-                {/* Header */}
-                <div className="text-center mb-20 space-y-4">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-purple/10 border border-accent-purple/20 text-accent-purple text-xs font-mono tracking-widest uppercase mb-4 shadow-[0_0_15px_rgba(168,85,247,0.2)]">
-                        <ShieldCheck className="w-3 h-3" /> DAO Control
-                    </div>
-                    <h1 className="text-5xl md:text-6xl font-display font-medium tracking-tight mb-6 text-glow text-[var(--foreground)]">
-                        Governance
-                    </h1>
-                    <p className="text-lg text-enclave-muted max-w-2xl mx-auto font-light leading-relaxed">
-                        Shape the future of Obsidian. Vote on protocol parameters, upgrades, and treasury allocation.
-                    </p>
-                </div>
+            <main className="container mx-auto px-6 py-24 relative z-10 flex flex-col items-center justify-center min-h-screen">
+                {/* Back Link */}
+                <Link
+                    href="/"
+                    className="absolute top-8 left-8 flex items-center gap-2 text-xs font-mono text-white/40 hover:text-white/80 transition-colors tracking-widest uppercase"
+                >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back
+                </Link>
 
-                {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20 max-w-5xl mx-auto">
-                    {[
-                        { label: "Treasury Value", value: "$4.2M", icon: <ShieldCheck className="w-5 h-5 text-accent-purple" /> },
-                        { label: "Active Proposals", value: "1", icon: <Clock className="w-5 h-5 text-accent-purple" /> },
-                        { label: "Total Members", value: "1,240", icon: <Users className="w-5 h-5 text-accent-purple" /> },
-                    ].map((stat, i) => (
-                        <div key={i} className="glass-panel p-6 rounded-2xl border border-white/5 flex items-center gap-4 hover:border-accent-purple/20 transition-colors group">
-                            <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:shadow-[0_0_15px_rgba(168,85,247,0.3)] transition-all">
-                                {stat.icon}
-                            </div>
-                            <div>
-                                <p className="text-xs font-mono text-[var(--muted)] uppercase tracking-wider">{stat.label}</p>
-                                <p className="text-2xl font-display font-bold text-white group-hover:text-glow transition-all">{stat.value}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                {/* Coming Soon Card */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    className="max-w-lg w-full text-center"
+                >
+                    {/* Badge */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.2 }}
+                        className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent-purple/10 border border-accent-purple/20 text-accent-purple text-xs font-mono tracking-widest uppercase mb-10 shadow-[0_0_20px_rgba(168,85,247,0.15)]"
+                    >
+                        <ShieldCheck className="w-3.5 h-3.5" /> DAO Control
+                    </motion.div>
 
-                {/* Active Proposals */}
-                <div className="max-w-3xl mx-auto">
-                    <h2 className="text-xl font-display mb-8 flex items-center gap-3">
-                        <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]"></div>
-                        <span className="font-crypto text-sm tracking-[0.2em] text-[var(--foreground)]">ACTIVE_PROPOSALS</span>
-                    </h2>
+                    {/* Icon */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
+                        className="w-28 h-28 mx-auto mb-10 rounded-full bg-gradient-to-br from-accent-purple/10 to-[#6AE3FF]/5 border border-white/10 flex items-center justify-center relative shadow-[0_0_60px_rgba(168,85,247,0.15)]"
+                    >
+                        <Lock className="w-10 h-10 text-accent-purple/60" />
+                        <div className="absolute inset-0 rounded-full animate-ping bg-accent-purple/5" style={{ animationDuration: '3s' }}></div>
+                    </motion.div>
 
-                    <div className="glass-panel rounded-2xl p-8 border border-white/10 relative overflow-hidden group hover:border-accent-purple/30 transition-all">
-                        <div className="absolute top-0 right-0 p-4">
-                            <div className="px-3 py-1 bg-green-500/10 text-green-400 text-xs font-mono rounded-full border border-green-500/20 shadow-[0_0_10px_rgba(34,197,94,0.1)]">
-                                Voting Live
-                            </div>
-                        </div>
+                    {/* Title */}
+                    <motion.h1
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.5 }}
+                        className="text-4xl md:text-5xl font-display font-medium tracking-tight mb-4 text-glow"
+                    >
+                        Coming Soon
+                    </motion.h1>
 
-                        <div className="mb-6">
-                            <h3 className="text-2xl font-display mb-2 text-white/90">OIP-1: Increase Max Allocation Cap</h3>
-                            <p className="text-enclave-muted leading-relaxed text-sm">
-                                Proposing to increase the per-user allocation cap from 1,000 OBS to 2,500 OBS to accommodate higher demand from institutional participants.
-                            </p>
-                        </div>
+                    <motion.p
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.6 }}
+                        className="text-enclave-muted font-mono text-sm leading-relaxed max-w-md mx-auto mb-12"
+                    >
+                        On-chain governance powered by Arcium confidential voting.
+                        <br />
+                        <span className="text-[#6AE3FF]/70">Private ballots. Verifiable results. Zero leaks.</span>
+                    </motion.p>
 
-                        <div className="grid grid-cols-2 gap-4 mb-8 text-sm">
-                            <div className="bg-white/5 rounded-lg p-4">
-                                <span className="block text-[var(--muted)] mb-1 text-xs uppercase tracking-wider">For</span>
-                                <span className="text-lg font-mono font-bold text-white">840K OBS (92%)</span>
-                                <div className="w-full bg-white/10 h-1.5 rounded-full mt-3 overflow-hidden">
-                                    <div className="bg-green-500 h-full w-[92%]"></div>
-                                </div>
-                            </div>
-                            <div className="bg-white/5 rounded-lg p-4">
-                                <span className="block text-[var(--muted)] mb-1 text-xs uppercase tracking-wider">Against</span>
-                                <span className="text-lg font-mono font-bold text-white">72K OBS (8%)</span>
-                                <div className="w-full bg-white/10 h-1.5 rounded-full mt-3 overflow-hidden">
-                                    <div className="bg-red-500 h-full w-[8%]"></div>
-                                </div>
-                            </div>
-                        </div>
+                    {/* Feature Preview */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.7 }}
+                        className="grid grid-cols-2 gap-3 max-w-sm mx-auto mb-12"
+                    >
+                        {[
+                            { icon: <Vote className="w-4 h-4" />, label: "Encrypted Voting" },
+                            { icon: <Users className="w-4 h-4" />, label: "Token-Weighted" },
+                            { icon: <Cpu className="w-4 h-4" />, label: "MPC Tallying" },
+                            { icon: <Zap className="w-4 h-4" />, label: "On-Chain Results" },
+                        ].map((feature, i) => (
+                            <motion.div
+                                key={i}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.8 + i * 0.1 }}
+                                className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-white/40 text-xs font-mono tracking-wider"
+                            >
+                                <span className="text-accent-purple/50">{feature.icon}</span>
+                                {feature.label}
+                            </motion.div>
+                        ))}
+                    </motion.div>
 
-                        {hasVoted ? (
-                            <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center justify-center gap-3 text-green-400 font-mono text-sm">
-                                <CheckCircle className="w-5 h-5" /> You have verified your vote on-chain.
-                            </div>
-                        ) : (
-                            <div className="flex gap-4">
-                                <button
-                                    onClick={() => handleVote('yes')}
-                                    className="flex-1 py-4 rounded-xl bg-white/5 hover:bg-green-500/10 border border-white/10 hover:border-green-500/30 text-white hover:text-green-400 transition-all font-mono uppercase tracking-widest text-sm flex items-center justify-center gap-2 group/btn"
-                                >
-                                    <CheckCircle className="w-4 h-4 opacity-50 group-hover/btn:opacity-100" /> Approve
-                                </button>
-                                <button
-                                    onClick={() => handleVote('no')}
-                                    className="flex-1 py-4 rounded-xl bg-white/5 hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 text-white hover:text-red-400 transition-all font-mono uppercase tracking-widest text-sm flex items-center justify-center gap-2 group/btn"
-                                >
-                                    <XCircle className="w-4 h-4 opacity-50 group-hover/btn:opacity-100" /> Reject
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </div>
+                    {/* CTA */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 1.2 }}
+                    >
+                        <Link
+                            href="/"
+                            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 text-xs font-mono tracking-widest uppercase hover:bg-white/10 hover:text-white/90 hover:border-accent-purple/30 transition-all shadow-lg"
+                        >
+                            <ArrowLeft className="w-3.5 h-3.5" /> Back to Launchpad
+                        </Link>
+                    </motion.div>
+                </motion.div>
             </main>
         </div>
     );

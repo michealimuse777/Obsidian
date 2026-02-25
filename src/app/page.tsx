@@ -16,7 +16,7 @@ export default function Home() {
       <div className="flex-1 flex flex-col items-center justify-start pt-20 pb-20 gap-12">
         <Hero />
 
-        <div className="w-full px-4 relative z-20 -mt-20">
+        <div className="w-full px-4 relative z-20 mt-4">
           <BidForm />
         </div>
 

@@ -11,6 +11,7 @@
  */
 
 import type { AnchorProvider } from "@coral-xyz/anchor";
+import { BN } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 
 /**
@@ -83,7 +84,6 @@ export async function deriveArciumAccounts(
     compDefName: string
 ) {
     const {
-        getArciumEnv,
         getCompDefAccAddress,
         getCompDefAccOffset,
         getComputationAccAddress,
@@ -95,20 +95,21 @@ export async function deriveArciumAccounts(
         getClockAccAddress,
     } = await getArciumClient();
 
-    const arciumEnv = getArciumEnv();
+    // Hardcoded cluster offset — getArciumEnv() only works in Node.js
+    const CLUSTER_OFFSET = 456;
 
     const compDefOffset = getCompDefAccOffset(compDefName);
     const compDefOffsetNum = Buffer.from(compDefOffset as any).readUInt32LE();
 
     return {
         computationAccount: getComputationAccAddress(
-            arciumEnv.arciumClusterOffset,
-            computationOffset as any
+            CLUSTER_OFFSET,
+            new BN(computationOffset) as any
         ),
-        clusterAccount: getClusterAccAddress(arciumEnv.arciumClusterOffset),
+        clusterAccount: getClusterAccAddress(CLUSTER_OFFSET),
         mxeAccount: getMXEAccAddress(programId),
-        mempoolAccount: getMempoolAccAddress(arciumEnv.arciumClusterOffset),
-        executingPool: getExecutingPoolAccAddress(arciumEnv.arciumClusterOffset),
+        mempoolAccount: getMempoolAccAddress(CLUSTER_OFFSET),
+        executingPool: getExecutingPoolAccAddress(CLUSTER_OFFSET),
         compDefAccount: getCompDefAccAddress(
             programId,
             compDefOffsetNum

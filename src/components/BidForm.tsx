@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, ArrowRight, Loader2, CheckCircle, Wallet } from 'lucide-react';
+import { Lock, ArrowRight, Loader2, CheckCircle, Wallet, ExternalLink } from 'lucide-react';
 import { useProgram } from '@/hooks/useProgram';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey, SystemProgram } from '@solana/web3.js';
@@ -10,6 +10,9 @@ import * as spl from '@solana/spl-token';
 import { BN } from '@coral-xyz/anchor';
 import { toast } from 'sonner';
 import { encryptBid, deriveArciumAccounts, waitForComputation } from '@/lib/arcium';
+
+const getExplorerUrl = (sig: string) =>
+    `https://explorer.solana.com/tx/${sig}?cluster=devnet`;
 
 export default function BidForm() {
     const { program, provider } = useProgram();
@@ -172,7 +175,7 @@ export default function BidForm() {
             const arciumAccounts = await deriveArciumAccounts(
                 program.programId,
                 computationOffsetBytes,
-                "compute_winner"
+                "verify_bid"
             );
 
             // Convert nonce to BN (u128)
@@ -188,7 +191,6 @@ export default function BidForm() {
                 .submitEncryptedBid(
                     computationOffset,
                     Array.from(encrypted.ciphertext),
-                    encrypted.publicKey,
                     nonceBN,
                 )
                 .accounts({
@@ -201,26 +203,43 @@ export default function BidForm() {
                 .rpc({ commitment: "confirmed" });
 
             console.log("Transaction Signature:", tx);
-            toast.success('Bid Encrypted & Submitted to Arcium');
+            setTxHash(tx);
+            toast.success('Bid Encrypted & Submitted to Arcium', {
+                action: { label: 'View Tx', onClick: () => window.open(getExplorerUrl(tx), '_blank') },
+            });
 
             // ═══════════════════════════════════════════════════
-            // STEP 4: Wait for MPC computation to finalize
+            // STEP 4: Wait for MPC computation (with 60s timeout)
             // ═══════════════════════════════════════════════════
             setStatus('computing');
             toast.info('MPC computing...', { description: 'Arcium nodes are processing your bid confidentially.' });
 
-            const finalizeSig = await waitForComputation(
-                provider,
-                computationOffsetBytes,
-                program.programId
+            const MPC_TIMEOUT_MS = 60_000;
+            const timeoutPromise = new Promise<null>((resolve) =>
+                setTimeout(() => resolve(null), MPC_TIMEOUT_MS)
             );
 
-            console.log("Computation finalized:", finalizeSig);
+            const finalizeSig = await Promise.race([
+                waitForComputation(provider, computationOffsetBytes, program.programId),
+                timeoutPromise,
+            ]);
 
             setHasBid(true);
             setBidData({ txHash: tx, allocation: 0, isClaimed: false, isProcessed: false });
             setStatus('success');
-            toast.success('Bid processed by MPC!');
+
+            if (finalizeSig) {
+                console.log("Computation finalized:", finalizeSig);
+                toast.success('Bid processed by MPC!', {
+                    action: { label: 'View Tx', onClick: () => window.open(getExplorerUrl(tx), '_blank') },
+                });
+            } else {
+                console.log("MPC timeout — bid is on-chain, MPC processing in background");
+                toast.success('Bid Submitted ✅', {
+                    description: 'MPC processing in background. Your bid is safe on-chain.',
+                    action: { label: 'View Tx', onClick: () => window.open(getExplorerUrl(tx), '_blank') },
+                });
+            }
 
             if (window.innerWidth < 768) {
                 setTimeout(() => setIsMobileOpen(false), 2000);
@@ -348,7 +367,8 @@ export default function BidForm() {
                 toast.success("Created Token Account");
             }
 
-            const tx = await (program.methods as any)
+            const CLAIM_TIMEOUT_MS = 30_000;
+            const claimPromise = (program.methods as any)
                 .claimTokens()
                 .accounts({
                     bid: bidPda,
@@ -361,8 +381,18 @@ export default function BidForm() {
                 })
                 .rpc();
 
-            toast.success('Tokens Claimed!', { description: `Tx: ${tx.slice(0, 8)}...` });
-            setBidData(prev => prev ? { ...prev, isClaimed: true } : null);
+            const claimTimeout = new Promise<null>((resolve) =>
+                setTimeout(() => resolve(null), CLAIM_TIMEOUT_MS)
+            );
+
+            const tx = await Promise.race([claimPromise, claimTimeout]);
+
+            if (tx) {
+                toast.success('Tokens Claimed!', { description: `Tx: ${(tx as string).slice(0, 8)}...` });
+                setBidData(prev => prev ? { ...prev, isClaimed: true } : null);
+            } else {
+                toast.success('Claim submitted ✅', { description: 'Confirming in background. Refresh to check status.' });
+            }
             setStatus('success');
         } catch (err: any) {
             console.error("Claim error:", err);
@@ -416,6 +446,21 @@ export default function BidForm() {
 
                     {/* Details Card */}
                     <div className="p-5 rounded-xl bg-black/20 border border-white/5 space-y-4 text-left shadow-inner">
+                        {bidData.txHash && bidData.txHash !== "Registered" && bidData.txHash !== "Verified" && (
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-purple-200/60 font-mono">Transaction</span>
+                                <a
+                                    href={getExplorerUrl(bidData.txHash)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-cyan-400 font-mono text-xs flex items-center gap-1.5 hover:text-cyan-300 transition-colors"
+                                >
+                                    {bidData.txHash.slice(0, 8)}...{bidData.txHash.slice(-4)}
+                                    <ExternalLink className="w-3 h-3" />
+                                </a>
+                            </div>
+                        )}
+
                         <div className="flex justify-between items-center text-sm">
                             <span className="text-purple-200/60 font-mono">Bid Amount</span>
                             <span className="text-accent-purple font-mono flex items-center gap-2 font-bold">
@@ -621,9 +666,9 @@ export default function BidForm() {
                                 animate={{ y: 0 }}
                                 exit={{ y: "100%" }}
                                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                                className="fixed bottom-0 left-0 right-0 glass-panel border-t border-white/10 rounded-t-[2.5rem] p-8 pb-12 z-50 shadow-[0_-10px_50px_rgba(0,0,0,0.8)]"
+                                className="fixed bottom-0 left-0 right-0 glass-panel border-t border-white/10 rounded-t-[2.5rem] p-6 pb-8 z-50 shadow-[0_-10px_50px_rgba(0,0,0,0.8)] max-h-[85vh] overflow-y-auto"
                             >
-                                <div className="w-16 h-1.5 bg-white/20 rounded-full mx-auto mb-10" />
+                                <div className="w-16 h-1.5 bg-white/20 rounded-full mx-auto mb-6" />
                                 {formElements}
                             </motion.div>
                         </>
